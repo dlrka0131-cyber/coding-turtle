@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+  :root {
+    --sky: linear-gradient(135deg, #7085B6, #DEF3F8); /* 눈이 편안한 Deep Relief 색상 */
+    --shell: #2E8B7A;
+    --shell-dark: #1F6357;
+    --sand: #FFF3D6;
+    --coral: #FF7A5C;
+    --ink: #1E2A28;
+    --panel: #16241F;
+    --panel-line: #2C3E37;
+    --tab-inactive: #D0E3DD;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    height: 100vh;
+    background: var(--sky);
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px; /* 헤더가 없어진 대신 상하좌우 여백을 조금 더 주었습니다 */
+    overflow: hidden;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 1600px;
+    flex: 1; 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    min-height: 0; 
+  }
+
+  @media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+    body { overflow: auto; }
+  }
+
+  .pane {
+    background: #FFFFFF;
+    border-radius: 18px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* 배경색이 차분해져서 그림자를 살짝 더 부드럽게 조정했습니다 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pane-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--sand);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--shell-dark);
+    border-bottom: 3px solid var(--shell);
+    flex-shrink: 0;
+  }
+
+  .pane-label.example-label {
+    background: #EAEAE0;
+    color: #4A5D54;
+    border-bottom: 3px solid #8BA89D;
+  }
+
+  #storybook {
+    flex: 1;
+    overflow-y: auto;
+    background: #FAFAFA;
+    padding: 24px;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .story-step {
+    background: white;
+    border: 2px solid #E0E0E0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .story-step h3 {
+    margin: 0 0 12px 0;
+    font-size: 1.35rem;
+    color: var(--shell-dark);
+  }
+  .story-step p {
+    margin: 0 0 16px 0;
+    font-size: 1.2rem;
+    line-height: 1.7;
+    color: #000000;
+    word-break: keep-all;
+  }
+  .story-step code {
+    background: #FFF3D6; color: #C85742; padding: 4px 8px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 1.05em; font-weight: bold;
+  }
+  .target-box {
+    background: #24362F; color: #D9F2E6; font-family: 'JetBrains Mono', monospace; font-weight: 600;
+    padding: 14px 18px; border-radius: 8px;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    white-space: pre-wrap;
+  }
+  .practice-row { display: flex; align-items: center; gap: 10px; }
+  .practice-input {
+    flex: 1; font-family: 'JetBrains Mono', monospace; 
+    font-size: 1.15rem; 
+    padding: 12px 16px; border: 2px dashed #BDBDBD; border-radius: 8px; outline: none; transition: all 0.2s;
+    white-space: pre; 
+  }
+  .practice-input:focus { border-color: var(--shell); }
+  .practice-input.correct {
+    border: 2px solid var(--shell); background-color: #EAF6F5; color: var(--shell-dark); font-weight: bold;
+  }
+  .check-icon { font-size: 1.6rem; min-width: 36px; }
+
+  .tab-container {
+    display: flex;
+    flex-wrap: nowrap; 
+    background: var(--tab-inactive);
+    border-bottom: 3px solid var(--shell);
+    flex-shrink: 0;
+    overflow-x: auto; 
+  }
+  .tab-btn {
+    flex: 1 1 auto;
+    font-family: 'Noto Sans KR', sans-serif; font-weight: 700; background: none; border: none;
+    padding: 12px 6px; font-size: 1.05rem; color: #5C7A70; cursor: pointer; transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn.active { background: var(--sand); color: var(--shell-dark); }
+  .tab-btn:hover:not(.active) { background: #C0D6CF; }
+
+  #run-btn {
+    font-family: 'Noto Sans KR', sans-serif; background: var(--coral); color: white;
+    border: none; border-radius: 999px; padding: 8px 24px; font-size: 1.1rem;
+    cursor: pointer; box-shadow: 0 3px 0 #C85742; transition: transform 0.06s ease;
+  }
+  #run-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .code-editor-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  #code-highlight, textarea#code { position: absolute; inset: 0; margin: 0; padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; overflow: auto; tab-size: 4; border: none; }
+  #code-highlight { background: var(--panel); color: #E8F3EE; pointer-events: none; }
+  #code-highlight code { font: inherit; color: inherit; white-space: inherit; }
+  .comment-token { color: #6FA88A; }
+  textarea#code { background: transparent; color: transparent; caret-color: #E8F3EE; resize: none; outline: none; }
+  textarea#code:focus-visible { box-shadow: inset 0 0 0 3px var(--shell); }
+
+  #result-modal {
+    display: none; 
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7); 
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+
+  .modal-content {
+    background: white;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--sand);
+    padding: 16px 24px;
+    border-bottom: 3px solid var(--shell);
+  }
+  
+  .modal-header h2 {
+    margin: 0; font-family: 'Noto Sans KR', sans-serif; font-size: 1.5rem; color: var(--shell-dark);
+  }
+
+  .close-btn {
+    background: #FF7A5C; color: white; border: none; font-size: 1.2rem; font-weight: bold;
+    border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 0 #C85742; transition: transform 0.06s;
+  }
+  .close-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .home-btn {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 500;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: white;
+    color: var(--shell-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    text-decoration: none;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.12);
+    transition: transform 0.06s ease;
+  }
+  .home-btn:hover { background: var(--sand); }
+  .home-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.15); }
+
+  .complete-btn {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    z-index: 500;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 18px;
+    background: var(--coral);
+    color: white;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #C85742;
+    transition: transform 0.06s ease;
+  }
+  .complete-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+  .complete-btn.done { background: var(--shell); box-shadow: 0 3px 0 var(--shell-dark); cursor: default; }
+
+  .modal-header-actions { display: flex; align-items: center; gap: 10px; }
+  .replay-btn { background: #4A90D9; color: white; border: none; font-size: 1.1rem; font-weight: bold; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #2D6BA8; transition: transform 0.06s; }
+  .replay-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2D6BA8; }
+
+  #canvas-wrap {
+    background: #FFFDF6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    height: 450px;
+  }
+
+  #output {
+    background: var(--panel);
+    color: #9FE6C8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05rem;
+    padding: 16px 24px;
+    min-height: 80px;
+    max-height: 150px;
+    overflow-y: auto;
+    border-top: 1px solid var(--panel-line);
+    white-space: pre-wrap;
+  }
+  #output:empty::before { content: '실행 결과가 여기에 나와요'; color: #5C7A70; }
+  .error-text { color: #FFB199; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<a class="home-btn" href="index.html" title="처음으로"><i class="fa-solid fa-house"></i></a>
+<button id="complete-btn" class="complete-btn" type="button">✅ 완료</button>
+
+<div class="board">
+  
+  <!-- 왼쪽 창: 스토리북 (설명서) -->
+  <div class="pane">
+    <div class="pane-label example-label">
+      📖 스토리북 코딩 설명서 (따라 쳐보세요!)
+    </div>
+    <div id="storybook">
+      <div class="story-step">
+        <h3>1. 거북이 공장 연결하기 🐢</h3>
+        <p>컴퓨터에게 "거북이 그림 도구를 쓸 거야!"라고 알려줘야 해요.</p>
+        <div class="target-box">import turtle</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="import turtle" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>2. 내 꼬마 거북이 만들기 🥚</h3>
+        <p>펜 역할을 할 거북이를 한 마리 만들고 <code>t</code>라는 별명을 붙여줘요.</p>
+        <div class="target-box">t = turtle.Turtle()</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="t = turtle.Turtle()" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>3. 마법의 주문! 반복하기 🪄</h3>
+        <p><code>for i in range(4):</code>는 "4번 반복해!"라는 주문이에요. 끝에 콜론(<code>:</code>) 빼먹지 마세요!</p>
+        <div class="target-box">for i in range(4):</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="for i in range(4):" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>4. 앞으로 전진! 🐾</h3>
+        <p>콜론(:) 다음 줄부터는 꼭 <b>스페이스바 4번(들여쓰기)</b>을 해야 세트로 반복돼요. 먼저 100만큼 걸어가 볼까요?</p>
+        <div class="target-box">    t.forward(100)</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="    t.forward(100)" placeholder="    ← 스페이스바 4번 누르고 똑같이 치세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>5. 방향 틀기 (회전하기) 🔄</h3>
+        <p>앞으로 갔으면 방향을 꺾어야 사각형이 되겠죠? <code>left(90)</code>은 왼쪽으로 90도 돌라는 뜻이에요. 이것도 줄을 꼭 맞춰주세요!</p>
+        <div class="target-box">    t.left(90)</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="    t.left(90)" placeholder="    ← 스페이스바 4번 누르고 똑같이 치세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 오른쪽 창: 실습 코드 -->
+  <div class="pane">
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="changeTab(0)">기본: 사각형</button>
+      <button class="tab-btn" onclick="changeTab(1)">도전 1: 삼각형</button>
+      <button class="tab-btn" onclick="changeTab(2)">도전 2: 원</button>
+      <button class="tab-btn" onclick="changeTab(3)">도전 3: 별</button>
+      <button class="tab-btn" onclick="changeTab(4)">도전 4: 육각형</button>
+      <button class="tab-btn" onclick="changeTab(5)">💡 정답</button>
+    </div>
+    <div class="pane-label">
+      💻 내 코드 (조립해 보아요)
+      <button id="run-btn" type="button">▶ 실행하기</button>
+    </div>
+    <div class="code-editor-wrap">
+      <pre id="code-highlight" aria-hidden="true"><code></code></pre>
+      <textarea id="code" spellcheck="false"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- 팝업 모달창 -->
+<div id="result-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modal-title">✨ 거북이의 그림 완성!</h2>
+      <div class="modal-header-actions">
+        <button class="replay-btn" onclick="showPreview()" title="다시보기">🔁</button>
+        <button class="close-btn" onclick="closeModal()">✖</button>
+      </div>
+    </div>
+    <div id="canvas-wrap"><div id="mycanvas"></div></div>
+    <div id="output" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.practice-input').forEach(input => {
+    input.addEventListener('input', function() {
+      if (this.value === this.getAttribute('data-target')) {
+        this.classList.add('correct');
+        this.nextElementSibling.textContent = '✅';
+      } else {
+        this.classList.remove('correct');
+        this.nextElementSibling.textContent = '';
+      }
+    });
+  });
+
+  const outputEl = document.getElementById('output');
+  const codeArea = document.getElementById('code');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const modal = document.getElementById('result-modal');
+  const modalTitle = document.getElementById('modal-title');
+
+  const codeHighlightEl = document.getElementById('code-highlight').querySelector('code');
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function highlightComments(text) {
+    return text.split('\n').map(function(line) {
+      var inStr = null, commentIdx = -1;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (inStr) {
+          if (ch === inStr) inStr = null;
+        } else if (ch === '"' || ch === "'") {
+          inStr = ch;
+        } else if (ch === '#') {
+          commentIdx = i;
+          break;
+        }
+      }
+      if (commentIdx === -1) return escapeHtml(line);
+      return escapeHtml(line.slice(0, commentIdx)) + '<span class="comment-token">' + escapeHtml(line.slice(commentIdx)) + '</span>';
+    }).join('\n');
+  }
+
+  function updateHighlight() {
+    codeHighlightEl.innerHTML = highlightComments(codeArea.value) + '\n';
+  }
+
+  codeArea.addEventListener('input', updateHighlight);
+  codeArea.addEventListener('scroll', function() {
+    document.getElementById('code-highlight').scrollTop = codeArea.scrollTop;
+    document.getElementById('code-highlight').scrollLeft = codeArea.scrollLeft;
+  });
+
+  const challenges = [
+    `# [기본 연습] 사각형
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("green")
+t.speed(3)
+
+# 여기에 4번 반복하는 for문과 이동/회전 코드를 적어보세요.
+
+`,
+    `# 🚀 [도전 1] 삼각형 그리기
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("blue")
+t.speed(3)
+
+# 힌트: 삼각형은 3번 반복하고, 각도는 120도를 돌아야 해요.
+
+`,
+    `# 🚀 [도전 2] 동그란 원 그리기
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("red")
+t.speed(3)
+
+# 힌트: t.circle(50) 이라고 적으면 반지름이 50인 원을 그려요!
+
+`,
+    `# 🚀 [도전 3] 반짝반짝 별 그리기
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("gold")
+t.speed(5)
+
+# 힌트: 별은 5번 반복하고, 거리는 100, 각도는 144도를 돌아야 해요!
+
+`,
+    `# 🚀 [도전 4] 튼튼한 육각형 그리기
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("purple")
+t.speed(4)
+
+# 힌트: 육각형은 6번 반복하고, 각도는 60도를 돌아야 해요!
+
+`,
+    `# 💡 [정답] 코딩하다가 막혔을 때 참고하세요!
+
+# ------------------------------------
+# 🚀 [도전 1] 삼각형 그리기 정답
+for i in range(3):
+    t.forward(100)
+    t.left(120)
+
+# ------------------------------------
+# 🚀 [도전 2] 동그란 원 그리기 정답
+t.circle(50)
+
+# ------------------------------------
+# 🚀 [도전 3] 반짝반짝 별 그리기 정답
+for i in range(5):
+    t.forward(100)
+    t.left(144)
+
+# ------------------------------------
+# 🚀 [도전 4] 튼튼한 육각형 그리기 정답
+for i in range(6):
+    t.forward(100)
+    t.left(60)
+`
+  ];
+
+  function changeTab(index) {
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabBtns[index].classList.add('active');
+    codeArea.value = challenges[index];
+    updateHighlight();
+  }
+
+  changeTab(0);
+
+  function closeModal() {
+    modal.style.display = 'none';
+    document.getElementById('canvas-wrap').innerHTML = '<div id="mycanvas"></div>';
+    outputEl.textContent = '';
+  }
+
+  function outf(text) {
+    outputEl.textContent += text;
+  }
+
+  function builtinRead(x) {
+    if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+      throw "파일을 찾을 수 없어요: '" + x + "'";
+    }
+    return Sk.builtinFiles["files"][x];
+  }
+
+  function showPreview() {
+    modalTitle.innerHTML = '🎁 1차시: 오늘 만들 멋진 작품 미리보기!';
+    modal.style.display = 'flex';
+
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({ output: outf, read: builtinRead, __future__: Sk.python3 });
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450;
+    Sk.TurtleGraphics.width = 650;
+
+    const previewCode = `
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("gold")
+t.speed(5)
+
+# 반짝반짝 별 그리기
+for i in range(5):
+    t.forward(150)
+    t.left(144)
+`;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, previewCode, true);
+    });
+  }
+
+  // 화면이 열리고 0.5초 뒤에 짠! 하고 나타납니다.
+  window.addEventListener('load', () => {
+    setTimeout(showPreview, 500);
+  });
+
+  function runCode() {
+    modalTitle.innerHTML = '✨ 거북이의 그림 완성!';
+    modal.style.display = 'flex';
+
+    const code = codeArea.value;
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({
+      output: outf,
+      read: builtinRead,
+      __future__: Sk.python3
+    });
+    
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450; 
+    Sk.TurtleGraphics.width = 650;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, code, true);
+    }).then(
+      function () {},
+      function (err) {
+        let originalError = err.toString();
+        let friendlyMessage = "\n앗! 에러가 났어요: " + originalError;
+
+        if (originalError.includes("has no attribute 'torward'")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 오타가 났어요! 'torward'가 아니라 앞(전진)을 뜻하는 'forward'로 고쳐보세요!";
+        } else if (originalError.includes("has no attribute")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 거북이가 모르는 영어 단어예요. 철자가 틀리지 않았는지 다시 한번 확인해 보세요!";
+        } else if (originalError.includes("ParseError") || originalError.includes("SyntaxError") || originalError.includes("TokenError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 문법 규칙을 어겼어요! 혹시 괄호()나 줄 끝에 콜론(:)을 빼먹지 않았나요?";
+        } else if (originalError.includes("IndentationError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 줄을 잘못 섰어요! for문 아래에는 꼭 스페이스바를 4번(들여쓰기) 눌러줘야 해요!";
+        } else if (originalError.includes("NameError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 모르는 이름이에요! 파이썬은 대문자(T)와 소문자(t)를 엄격하게 구별한답니다. 오타가 없는지 확인해 보세요!";
+        }
+
+        const span = document.createElement('span');
+        span.className = 'error-text';
+        span.textContent = friendlyMessage;
+        outputEl.appendChild(span);
+      }
+    );
+  }
+
+  document.getElementById('run-btn').addEventListener('click', runCode);
+  
+  window.addEventListener('click', function(event) {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+</script>
+
+<script>
+  // ---------- 이 차시 완료 체크 (Firebase 로그인 필요) ----------
+  const CHAPTER_NUM = 1;
+  const completeBtn = document.getElementById('complete-btn');
+
+  function setCompleteBtnDone() {
+    completeBtn.textContent = '✔️ 완료했어요!';
+    completeBtn.classList.add('done');
+  }
+
+  completeBtn.addEventListener('click', async () => {
+    if (!auth.currentUser) {
+      alert('🐢 로그인이 필요해요! 첫 화면(index)에서 로그인 후 다시 눌러주세요.');
+      return;
+    }
+    try {
+      await markChapterComplete(CHAPTER_NUM);
+      setCompleteBtnDone();
+    } catch (e) {
+      alert('저장 중 문제가 생겼어요. 다시 시도해주세요.');
+    }
+  });
+
+  onAuthChange(async (user) => {
+    if (!user) return;
+    const progress = await getStudentProgress();
+    if (progress[String(CHAPTER_NUM)]) setCompleteBtnDone();
+  });
+</script>
+
+</body>
+</html>

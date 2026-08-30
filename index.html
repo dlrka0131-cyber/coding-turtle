@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: linear-gradient(135deg, #7085B6, #DEF3F8);
+    --shell: #2E8B7A;
+    --shell-dark: #1F6357;
+    --sand: #FFF3D6;
+    --coral: #FF7A5C;
+    --ink: #1E2A28;
+    --panel: #16241F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--sky);
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--ink);
+    padding: 32px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* 은은하게 떠다니는 배경 장식 (화면 곳곳에 퍼뜨려서 꽉 찬 느낌을 줘요) */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(4px);
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  body::before {
+    width: 260px; height: 260px;
+    top: -60px; left: -60px;
+    background: radial-gradient(circle, #FFFFFF 0%, transparent 70%);
+    animation: float-a 9s ease-in-out infinite;
+  }
+  body::after {
+    width: 320px; height: 320px;
+    bottom: -80px; right: -60px;
+    background: radial-gradient(circle, var(--sand) 0%, transparent 70%);
+    animation: float-b 11s ease-in-out infinite;
+  }
+  @keyframes float-a {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(24px, 30px); }
+  }
+  @keyframes float-b {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-20px, -24px); }
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+
+  header {
+    text-align: center;
+    margin-bottom: 64px;
+  }
+
+  .turtle-icon {
+    display: inline-block;
+    animation: turtle-bounce 2.6s ease-in-out infinite;
+  }
+  @keyframes turtle-bounce {
+    0%, 100% { transform: translateY(0) rotate(-6deg); }
+    50% { transform: translateY(-8px) rotate(6deg); }
+  }
+
+  header h1 {
+    font-size: clamp(2.6rem, 5.2vw, 4.6rem);
+    margin: 0 0 24px 0;
+    font-weight: 900;
+    color: var(--shell);
+    -webkit-text-stroke: 3px white;
+    paint-order: stroke fill;
+    text-shadow: 0 5px 0 rgba(31,99,87,0.28), 0 10px 24px rgba(0,0,0,0.15);
+    letter-spacing: -1px;
+  }
+
+  header p.subtitle {
+    display: inline-block;
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    font-weight: 700;
+    color: var(--shell-dark);
+    background: rgba(255,255,255,0.7);
+    padding: 8px 22px;
+    border-radius: 999px;
+    margin: 0 0 4px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .auth-hint {
+    text-align: center;
+    color: #3E534E;
+    font-size: 0.9rem;
+    margin: 0 0 14px 0;
+    white-space: nowrap;
+  }
+
+  .progress-wrap {
+    max-width: 420px;
+    margin: 0 auto 28px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 999px;
+    padding: 6px 6px 6px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  }
+
+  #progress-label {
+    font-weight: 700;
+    color: var(--shell-dark);
+    white-space: nowrap;
+    font-size: 0.95rem;
+  }
+
+  #reset-btn {
+    border: none;
+    background: white;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+    flex-shrink: 0;
+    transition: transform 0.06s ease;
+  }
+  #reset-btn:hover { background: var(--sand); }
+  #reset-btn:active { transform: translateY(2px) rotate(-30deg); box-shadow: none; }
+
+  .auth-box {
+    max-width: 600px;
+    margin: 0 auto 64px;
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 22px;
+    padding: 24px 24px 20px;
+    box-shadow: 0 10px 30px rgba(31,99,87,0.15), 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .auth-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+  .auth-row input {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 12px;
+    border: 2px solid #C9DCD5;
+    border-radius: 10px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+  }
+  .auth-row input:focus { border-color: var(--shell); }
+
+  .auth-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+  }
+  .auth-btn:hover { transform: translateY(-2px); }
+  .auth-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.12); }
+  #open-login-btn { background: var(--shell); color: white; }
+  #open-signup-btn { background: var(--sand); color: var(--shell-dark); }
+  #auth-logout-btn { background: var(--coral); color: white; }
+
+  #auth-logged-in {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-weight: 700;
+    color: var(--shell-dark);
+  }
+
+  .auth-btn-wide {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    font-size: 1rem;
+    background: var(--shell);
+    color: white;
+  }
+
+  .auth-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .auth-modal-overlay.open { display: flex; }
+
+  .auth-modal-content {
+    background: white;
+    width: 90%;
+    max-width: 380px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+
+  .auth-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--sand);
+    padding: 14px 20px;
+    border-bottom: 3px solid var(--shell);
+  }
+  .auth-modal-header h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--shell-dark);
+  }
+  .auth-modal-close {
+    background: var(--coral);
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .auth-modal-body { padding: 20px; }
+
+  .auth-modal-error {
+    display: block;
+    margin-top: 10px;
+    color: #C0392B;
+    font-size: 0.85rem;
+    text-align: center;
+    min-height: 1.2em;
+  }
+
+  .progress-track {
+    flex: 1;
+    background: #E3ECE8;
+    border-radius: 999px;
+    height: 14px;
+    overflow: hidden;
+  }
+
+  #progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--shell), #4FC79B);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  .category-section { margin-bottom: 36px; }
+
+  .category-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--sand);
+    border: 2px solid var(--shell);
+    border-radius: 999px;
+    padding: 8px 22px;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--shell-dark);
+    margin-bottom: 16px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 18px;
+  }
+
+  .chapter-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #FFFFFF;
+    border-radius: 20px;
+    padding: 22px 12px 18px;
+    text-decoration: none;
+    color: var(--ink);
+    box-shadow: 0 6px 0 rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.06);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+    border: 3px solid transparent;
+  }
+
+  .chapter-card:hover {
+    transform: translateY(-6px) scale(1.04);
+    box-shadow: 0 10px 0 rgba(0,0,0,0.08), 0 16px 24px rgba(0,0,0,0.12);
+    border-color: var(--shell);
+  }
+
+  .chapter-card:active { transform: translateY(-2px) scale(1.01); }
+
+  .chapter-card.completed { background: #F2FBF7; }
+
+  .chapter-badge {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    background: var(--shell);
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 0 var(--shell-dark);
+  }
+
+  .completed-check {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: var(--coral);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    box-shadow: 0 3px 0 #C85742;
+  }
+
+  .chapter-card.completed .completed-check { display: flex; }
+
+  .chapter-emoji { font-size: 2.4rem; line-height: 1; }
+
+  .chapter-title {
+    font-weight: 700;
+    font-size: 0.98rem;
+    text-align: center;
+    line-height: 1.35;
+    word-break: keep-all;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    color: #3E534E;
+    font-size: 0.9rem;
+  }
+
+  .site-footer {
+    text-align: center;
+    margin-top: 8px;
+    color: var(--shell-dark);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 500px) {
+    header h1 { font-size: 1.8rem; }
+    .card-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    .chapter-emoji { font-size: 2rem; }
+    .auth-hint { white-space: normal; font-size: 0.82rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1><span class="turtle-icon">🐢</span> 거북이 코딩 놀이터</h1>
+    <p class="subtitle">🐍 파이썬 터틀로 배우는 19가지 코딩 모험</p>
+  </header>
+
+  <div class="auth-box">
+    <div id="auth-logged-out">
+      <p class="auth-hint">로그인하면 어떤 컴퓨터에서든 내 진행 기록을 이어갈 수 있어요!</p>
+      <div class="auth-row">
+        <button id="open-login-btn" class="auth-btn">🔑 로그인</button>
+        <button id="open-signup-btn" class="auth-btn">✏️ 회원가입</button>
+      </div>
+    </div>
+    <div id="auth-logged-in" style="display:none;">
+      <span>👋 <span id="auth-username-display"></span>님, 환영해요!</span>
+      <button id="auth-logout-btn" class="auth-btn">로그아웃</button>
+    </div>
+  </div>
+
+  <p class="site-footer">
+    제작: 김정이 선생님 ❤️ &nbsp;|&nbsp; © 2026 Coding Playground
+  </p>
+
+  <div id="app-content" style="display:none;">
+    <div class="progress-wrap">
+      <span id="progress-label">0 / 19 완료</span>
+      <div class="progress-track"><div id="progress-bar"></div></div>
+      <button id="reset-btn" title="진행 기록 초기화">🔄</button>
+    </div>
+
+    <div id="categories"></div>
+
+    <footer>거북이와 함께 한 걸음씩, 오늘도 즐겁게 코딩해요! 🐢💻</footer>
+  </div>
+</div>
+
+<div id="signup-modal" class="auth-modal-overlay">
+  <div class="auth-modal-content">
+    <div class="auth-modal-header">
+      <h2>✏️ 처음이라면 회원가입!</h2>
+      <button class="auth-modal-close" data-close="signup-modal">✖</button>
+    </div>
+    <div class="auth-modal-body">
+      <div class="auth-row">
+        <input id="signup-school" placeholder="학교" autocomplete="off">
+        <input id="signup-grade" placeholder="학년 (예: 5학년)" autocomplete="off">
+      </div>
+      <div class="auth-row" style="margin-top:8px;">
+        <input id="signup-username" placeholder="이름" autocomplete="username">
+        <input id="signup-password" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="new-password">
+      </div>
+      <button id="signup-submit-btn" class="auth-btn auth-btn-wide">가입하고 시작하기</button>
+      <span id="signup-error" class="auth-modal-error"></span>
+    </div>
+  </div>
+</div>
+
+<div id="login-modal" class="auth-modal-overlay">
+  <div class="auth-modal-content">
+    <div class="auth-modal-header">
+      <h2>🔑 로그인</h2>
+      <button class="auth-modal-close" data-close="login-modal">✖</button>
+    </div>
+    <div class="auth-modal-body">
+      <div class="auth-row">
+        <input id="login-username" placeholder="이름" autocomplete="username">
+        <input id="login-password" type="password" placeholder="비밀번호" autocomplete="current-password">
+      </div>
+      <button id="login-submit-btn" class="auth-btn auth-btn-wide">로그인하기</button>
+      <span id="login-error" class="auth-modal-error"></span>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+  const chapters = [
+    { num: 1, file: 'chapter1_shapes.html', emoji: '🔺', title: '도형 그리기' },
+    { num: 2, file: 'chapter2_coloring.html', emoji: '🎨', title: '색칠하기' },
+    { num: 3, file: 'chapter3_functions.html', emoji: '📦', title: '나만의 함수 만들기' },
+    { num: 4, file: 'chapter4_keyboard.html', emoji: '🕹️', title: '키보드로 조종하기' },
+    { num: 5, file: 'chapter5_random.html', emoji: '🎲', title: '랜덤과 좌표' },
+    { num: 6, file: 'chapter6_input_variables.html', emoji: '💬', title: '입력과 변수' },
+    { num: 7, file: 'chapter7_lists.html', emoji: '🛒', title: '리스트 다루기' },
+    { num: 8, file: 'chapter8_modulo.html', emoji: '➗', title: '나머지 연산자' },
+    { num: 9, file: 'chapter9_nested_loops.html', emoji: '🌸', title: '이중 반복문' },
+    { num: 10, file: 'chapter10_conditional.html', emoji: '🤔', title: '조건문' },
+    { num: 11, file: 'chapter11_parameters.html', emoji: '🏭', title: '매개변수' },
+    { num: 12, file: 'chapter12_text.html', emoji: '📝', title: '텍스트와 f-문자열' },
+    { num: 13, file: 'chapter13_race.html', emoji: '🏁', title: '다중 객체 경주' },
+    { num: 14, file: 'chapter14_coin_collect.html', emoji: '🪙', title: '충돌 감지와 전역변수' },
+    { num: 15, file: 'chapter15_tag_game.html', emoji: '🏃', title: '타이머로 계속 움직이기' },
+    { num: 16, file: 'chapter16_snake1.html', emoji: '🐍', title: '스네이크 1탄' },
+    { num: 17, file: 'chapter17_snake2.html', emoji: '🐍', title: '스네이크 2탄' },
+    { num: 18, file: 'chapter18_snake3.html', emoji: '🐍', title: '스네이크 3탄' },
+    { num: 19, file: 'chapter19_paint.html', emoji: '🖌️', title: '나만의 그림판' },
+  ];
+
+  const categories = [
+    { icon: '🖍️', label: '기초 그리기', range: [1, 2] },
+    { icon: '🧩', label: '함수와 이벤트', range: [3, 4] },
+    { icon: '📊', label: '데이터 다루기', range: [5, 8] },
+    { icon: '🧠', label: '조건과 심화', range: [9, 12] },
+    { icon: '🎮', label: '미니게임 만들기', range: [13, 15] },
+    { icon: '🐍', label: '스네이크 & 그림판', range: [16, 19] },
+  ];
+
+  let cloudProgress = {};  // Firestore에서 불러온 진행 기록
+
+  function isVisited(num) {
+    return !!cloudProgress[String(num)];
+  }
+
+  function renderCard(ch) {
+    const visited = isVisited(ch.num);
+    return `
+      <a class="chapter-card${visited ? ' completed' : ''}" href="${ch.file}" data-num="${ch.num}">
+        <div class="chapter-badge">${ch.num}</div>
+        <div class="completed-check">✓</div>
+        <div class="chapter-emoji">${ch.emoji}</div>
+        <div class="chapter-title">${ch.title}</div>
+      </a>
+    `;
+  }
+
+  function render() {
+    const container = document.getElementById('categories');
+    container.innerHTML = categories.map(cat => {
+      const list = chapters.filter(c => c.num >= cat.range[0] && c.num <= cat.range[1]);
+      return `
+        <section class="category-section">
+          <div class="category-header">${cat.icon} ${cat.label}</div>
+          <div class="card-grid">
+            ${list.map(renderCard).join('')}
+          </div>
+        </section>
+      `;
+    }).join('');
+    // 카드는 그냥 이동만 해요 — "완료" 표시는 각 차시 페이지 안의
+    // "✅ 이 차시 완료!" 버튼을 눌러야만 남습니다.
+
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const done = chapters.filter(c => isVisited(c.num)).length;
+    document.getElementById('progress-label').textContent = `${done} / ${chapters.length} 완료`;
+    document.getElementById('progress-bar').style.width = (done / chapters.length * 100) + '%';
+  }
+
+  function resetProgress() {
+    if (!confirm('지금까지의 진행 기록을 모두 초기화할까요?')) return;
+    cloudProgress = {};
+    const user = auth.currentUser;
+    if (user) db.collection('students').doc(user.uid).set({ progress: {} }, { merge: false }).catch(() => {});
+    render();
+  }
+
+  document.getElementById('reset-btn').addEventListener('click', resetProgress);
+
+  // ---------- 로그인 / 회원가입 (모달) ----------
+
+  const FRIENDLY_ERRORS = {
+    'auth/email-already-in-use': '이미 있는 이름이에요. 다른 이름을 써보세요!',
+    'auth/invalid-email': '이름을 입력해주세요.',
+    'auth/weak-password': '비밀번호는 6자 이상으로 만들어주세요.',
+    'auth/user-not-found': '이름 또는 비밀번호가 틀렸어요.',
+    'auth/wrong-password': '이름 또는 비밀번호가 틀렸어요.',
+    'auth/invalid-credential': '이름 또는 비밀번호가 틀렸어요.',
+    'auth/missing-password': '비밀번호를 입력해주세요.',
+  };
+
+  function showErrorIn(elId, err) {
+    document.getElementById(elId).textContent = FRIENDLY_ERRORS[err.code] || ('오류가 발생했어요: ' + err.message);
+  }
+
+  function clearErrorIn(elId) {
+    document.getElementById(elId).textContent = '';
+  }
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    clearErrorIn(id === 'signup-modal' ? 'signup-error' : 'login-error');
+  }
+
+  document.getElementById('open-login-btn').addEventListener('click', () => openModal('login-modal'));
+  document.getElementById('open-signup-btn').addEventListener('click', () => openModal('signup-modal'));
+
+  document.querySelectorAll('.auth-modal-close').forEach(btn => {
+    btn.addEventListener('click', () => closeModal(btn.dataset.close));
+  });
+
+  document.querySelectorAll('.auth-modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal(overlay.id);
+    });
+  });
+
+  let lastTypedUsername = ''; // 로그인/가입 때 입력한 이름 (Firestore 값이 비어있을 때 대신 보여줄 이름)
+
+  document.getElementById('signup-submit-btn').addEventListener('click', async () => {
+    clearErrorIn('signup-error');
+    const school = document.getElementById('signup-school').value;
+    const grade = document.getElementById('signup-grade').value;
+    const username = document.getElementById('signup-username').value;
+    const password = document.getElementById('signup-password').value;
+    if (!school.trim() || !grade.trim() || !username.trim() || !password) {
+      showErrorIn('signup-error', { code: '', message: '학교, 학년, 이름, 비밀번호를 모두 입력해주세요.' });
+      return;
+    }
+    try {
+      lastTypedUsername = username.trim();
+      await signUpStudent(school, grade, username, password);
+      closeModal('signup-modal');
+    } catch (err) { showErrorIn('signup-error', err); }
+  });
+
+  document.getElementById('login-submit-btn').addEventListener('click', async () => {
+    clearErrorIn('login-error');
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    if (!username.trim() || !password) {
+      showErrorIn('login-error', { code: '', message: '이름과 비밀번호를 입력해주세요.' });
+      return;
+    }
+    try {
+      lastTypedUsername = username.trim();
+      await logInStudent(username, password);
+      closeModal('login-modal');
+    } catch (err) { showErrorIn('login-error', err); }
+  });
+
+  document.getElementById('auth-logout-btn').addEventListener('click', () => {
+    logOutStudent();
+  });
+
+  function clearAuthInputs() {
+    ['signup-school', 'signup-grade', 'signup-username', 'signup-password', 'login-username', 'login-password']
+      .forEach(id => { document.getElementById(id).value = ''; });
+  }
+
+  onAuthChange(async (user) => {
+    if (user) {
+      cloudProgress = await getStudentProgress();
+      const cloudName = await getStudentName();
+      const name = cloudName || lastTypedUsername || '학생';
+      document.getElementById('auth-username-display').textContent = name;
+      // Firestore에 이름이 비어있었다면(예전 계정 등) 지금 입력한 이름으로 채워줘요.
+      if (!cloudName && lastTypedUsername) {
+        db.collection('students').doc(user.uid).set({ username: lastTypedUsername }, { merge: true }).catch(() => {});
+      }
+      document.getElementById('auth-logged-out').style.display = 'none';
+      document.getElementById('auth-logged-in').style.display = 'flex';
+      document.getElementById('app-content').style.display = 'block';
+      closeModal('signup-modal');
+      closeModal('login-modal');
+      clearAuthInputs();
+    } else {
+      cloudProgress = {};
+      document.getElementById('auth-logged-out').style.display = 'block';
+      document.getElementById('auth-logged-in').style.display = 'none';
+      document.getElementById('app-content').style.display = 'none';
+    }
+    render();
+  });
+
+  render();
+</script>
+
+</body>
+</html>

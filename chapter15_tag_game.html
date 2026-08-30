@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>15차시: 미니게임 술래잡기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<style>
+  :root {
+    --sky: linear-gradient(135deg, #7085B6, #DEF3F8);
+    --shell: #2E8B7A;
+    --shell-dark: #1F6357;
+    --sand: #FFF3D6;
+    --coral: #FF7A5C;
+    --ink: #1E2A28;
+    --panel: #16241F;
+    --panel-line: #2C3E37;
+    --tab-inactive: #D0E3DD;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    height: 100vh;
+    background: var(--sky);
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px; 
+    overflow: hidden;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 1600px;
+    flex: 1; 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    min-height: 0; 
+  }
+
+  @media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+    body { overflow: auto; }
+  }
+
+  .pane {
+    background: #FFFFFF;
+    border-radius: 18px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pane-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--sand);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--shell-dark);
+    border-bottom: 3px solid var(--shell);
+    flex-shrink: 0;
+  }
+
+  .pane-label.example-label {
+    background: #EAEAE0;
+    color: #4A5D54;
+    border-bottom: 3px solid #8BA89D;
+  }
+
+  #storybook {
+    flex: 1;
+    overflow-y: auto;
+    background: #FAFAFA;
+    padding: 24px;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .story-step {
+    background: white;
+    border: 2px solid #E0E0E0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .story-step h3 { margin: 0 0 12px 0; font-size: 1.35rem; color: var(--shell-dark); }
+  .story-step p { margin: 0 0 16px 0; font-size: 1.2rem; line-height: 1.7; color: #000000; word-break: keep-all; }
+  .story-step code { background: #FFF3D6; color: #C85742; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 1.05em; font-weight: bold; }
+  .target-box { background: #24362F; color: #D9F2E6; font-family: 'JetBrains Mono', monospace; font-weight: 600; padding: 14px 18px; border-radius: 8px; font-size: 1.2rem; margin-bottom: 12px; white-space: pre-wrap; }
+  .practice-row { display: flex; align-items: center; gap: 10px; }
+  .practice-input { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; padding: 12px 16px; border: 2px dashed #BDBDBD; border-radius: 8px; outline: none; transition: all 0.2s; white-space: pre; }
+  .practice-input:focus { border-color: var(--shell); }
+  .practice-input.correct { border: 2px solid var(--shell); background-color: #EAF6F5; color: var(--shell-dark); font-weight: bold; }
+  .check-icon { font-size: 1.6rem; min-width: 36px; }
+
+  .tab-container { display: flex; flex-wrap: nowrap; background: var(--tab-inactive); border-bottom: 3px solid var(--shell); flex-shrink: 0; overflow-x: auto; }
+  .tab-btn { flex: 1 1 auto; font-family: 'Noto Sans KR', sans-serif; font-weight: 700; background: none; border: none; padding: 12px 6px; font-size: 1.05rem; color: #5C7A70; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+  .tab-btn.active { background: var(--sand); color: var(--shell-dark); }
+  .tab-btn:hover:not(.active) { background: #C0D6CF; }
+
+  #run-btn { font-family: 'Noto Sans KR', sans-serif; background: var(--coral); color: white; border: none; border-radius: 999px; padding: 8px 24px; font-size: 1.1rem; cursor: pointer; box-shadow: 0 3px 0 #C85742; transition: transform 0.06s ease; }
+  #run-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .code-editor-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  #code-highlight, textarea#code { position: absolute; inset: 0; margin: 0; padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; overflow: auto; tab-size: 4; border: none; }
+  #code-highlight { background: var(--panel); color: #E8F3EE; pointer-events: none; }
+  #code-highlight code { font: inherit; color: inherit; white-space: inherit; }
+  .comment-token { color: #6FA88A; }
+  textarea#code { background: transparent; color: transparent; caret-color: #E8F3EE; resize: none; outline: none; }
+  textarea#code:focus-visible { box-shadow: inset 0 0 0 3px var(--shell); }
+
+  #result-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+  .modal-content { background: white; width: 90%; max-width: 800px; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; background: var(--sand); padding: 16px 24px; border-bottom: 3px solid var(--shell); }
+  .modal-header h2 { margin: 0; font-family: 'Noto Sans KR', sans-serif; font-size: 1.5rem; color: var(--shell-dark); }
+  .close-btn { background: #FF7A5C; color: white; border: none; font-size: 1.2rem; font-weight: bold; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #C85742; transition: transform 0.06s; }
+  .close-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .modal-header-actions { display: flex; align-items: center; gap: 10px; }
+  .replay-btn { background: #4A90D9; color: white; border: none; font-size: 1.1rem; font-weight: bold; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #2D6BA8; transition: transform 0.06s; }
+  .replay-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2D6BA8; }
+
+  #canvas-wrap { background: #FFFDF6; display: flex; align-items: center; justify-content: center; padding: 20px; height: 450px; }
+  #output { background: var(--panel); color: #9FE6C8; font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; padding: 16px 24px; min-height: 80px; max-height: 150px; overflow-y: auto; border-top: 1px solid var(--panel-line); white-space: pre-wrap; }
+  #output:empty::before { content: '실행 결과가 여기에 나와요'; color: #5C7A70; }
+  .error-text { color: #FFB199; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="board">
+  
+  <div class="pane">
+    <div class="pane-label example-label">
+      📖 15차시: 술래잡기 (타이머와 추적)
+    </div>
+    <div id="storybook">
+      <div class="story-step">
+        <h3>1. 목표물 좌표 바라보기 (towards) 🎯</h3>
+        <p><code>towards(x, y)</code>는 거북이가 x, y 좌표가 있는 쪽의 각도를 계산해 줘요. 10차시에서 배운 <code>xcor()</code>, <code>ycor()</code>를 활용해서 내 거북이(t)의 위치를 짚어주면 적이 고개를 휙! 돌립니다.</p>
+        <div class="target-box">enemy.setheading(enemy.towards(t.xcor(), t.ycor()))</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="enemy.setheading(enemy.towards(t.xcor(), t.ycor()))" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>2. 타이머로 자동 반복 (ontimer) ⏱️</h3>
+        <p>for문 없이도 스스로 움직이게 하려면 <code>ontimer(함수이름, 밀리초)</code>를 써요. 100밀리초(0.1초) 뒤에 함수를 다시 부르라는 뜻이에요.</p>
+        <div class="target-box">turtle.ontimer(chase, 100)</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="turtle.ontimer(chase, 100)" placeholder="함수 이름에는 괄호()를 빼고 적어요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>3. 계속 실행되는 타이머 마법 🔁</h3>
+        <p>함수 마지막 줄에서 <code>ontimer</code>로 자기 자신을 다시 예약하면, 마치 알람이 울릴 때마다 다음 알람을 새로 맞추는 것처럼 프로그램이 끝날 때까지 멈추지 않고 계속 실행된답니다!</p>
+        <div class="target-box">def chase():
+    enemy.forward(5)
+    turtle.ontimer(chase, 100)</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="def chase():
+    enemy.forward(5)
+    turtle.ontimer(chase, 100)" placeholder="들여쓰기(4칸)에 주의해서 입력해보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>4. 잡혔다! 게임 오버 종료하기 🛑</h3>
+        <p>술래와 나의 거리가 가까워지면(충돌), 타이머를 다시 부르지 않고 그 자리에서 <code>return</code>을 써서 끝내버려요!</p>
+        <div class="target-box">if t.distance(enemy) < 20:
+    return</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="if t.distance(enemy) < 20:
+    return" placeholder="return은 함수를 즉시 종료하는 마법이에요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pane">
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="changeTab(0)">기본: 좀비 거북이</button>
+      <button class="tab-btn" onclick="changeTab(1)">도전 1: 키보드로 도망가기</button>
+      <button class="tab-btn" onclick="changeTab(2)">도전 2: 잡히면 게임 오버!</button>
+      <button class="tab-btn" onclick="changeTab(3)">도전 3: 생존 점수 올리기</button>
+      <button class="tab-btn" onclick="changeTab(4)">💡 정답</button>
+    </div>
+    <div class="pane-label">
+      💻 내 코드 (조립해 보아요)
+      <button id="run-btn" type="button">▶ 실행하기</button>
+    </div>
+    <div class="code-editor-wrap">
+      <pre id="code-highlight" aria-hidden="true"><code></code></pre>
+      <textarea id="code" spellcheck="false"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="result-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modal-title">✨ 거북이의 그림 완성!</h2>
+      <div class="modal-header-actions">
+        <button class="replay-btn" onclick="showPreview()" title="다시보기">🔁</button>
+        <button class="close-btn" onclick="closeModal()">✖</button>
+      </div>
+    </div>
+    <div id="canvas-wrap"><div id="mycanvas"></div></div>
+    <div id="output" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.practice-input').forEach(input => {
+    input.addEventListener('input', function() {
+      if (this.value === this.getAttribute('data-target')) {
+        this.classList.add('correct');
+        this.nextElementSibling.textContent = '✅';
+      } else {
+        this.classList.remove('correct');
+        this.nextElementSibling.textContent = '';
+      }
+    });
+  });
+
+  const outputEl = document.getElementById('output');
+  const codeArea = document.getElementById('code');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const modal = document.getElementById('result-modal');
+  const modalTitle = document.getElementById('modal-title');
+
+  const codeHighlightEl = document.getElementById('code-highlight').querySelector('code');
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function highlightComments(text) {
+    return text.split('\n').map(function(line) {
+      var inStr = null, commentIdx = -1;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (inStr) {
+          if (ch === inStr) inStr = null;
+        } else if (ch === '"' || ch === "'") {
+          inStr = ch;
+        } else if (ch === '#') {
+          commentIdx = i;
+          break;
+        }
+      }
+      if (commentIdx === -1) return escapeHtml(line);
+      return escapeHtml(line.slice(0, commentIdx)) + '<span class="comment-token">' + escapeHtml(line.slice(commentIdx)) + '</span>';
+    }).join('\n');
+  }
+
+  function updateHighlight() {
+    codeHighlightEl.innerHTML = highlightComments(codeArea.value) + '\n';
+  }
+
+  codeArea.addEventListener('input', updateHighlight);
+  codeArea.addEventListener('scroll', function() {
+    document.getElementById('code-highlight').scrollTop = codeArea.scrollTop;
+    document.getElementById('code-highlight').scrollLeft = codeArea.scrollLeft;
+  });
+
+  const challenges = [
+    `# [기본 연습] 나를 쫓아오는 좀비 거북이
+import turtle
+
+# 내가 조종할 거북이 (파란색)
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("blue")
+t.penup()
+
+# 적 거북이 (빨간색)
+enemy = turtle.Turtle()
+enemy.shape("turtle")
+enemy.color("red")
+enemy.penup()
+enemy.goto(-200, 150) # 멀리서 출발해요
+
+# 추적하는 마법 함수
+def chase():
+    # 1. enemy가 t의 좌표를 바라보게 하세요 (towards)
+    
+    
+    # 2. enemy를 앞으로 5만큼 전진시키세요
+    
+    
+    # 3. 0.1초(100밀리초) 뒤에 자기 자신(chase)을 다시 부르세요
+    
+
+# 추적 시작!
+chase()
+`,
+    `# 🚀 [도전 1] 방향키로 도망가기!
+import turtle
+
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("blue")
+t.penup()
+
+enemy = turtle.Turtle()
+enemy.shape("turtle")
+enemy.color("red")
+enemy.penup()
+enemy.goto(-200, 150)
+
+def chase():
+    enemy.setheading(enemy.towards(t.xcor(), t.ycor()))
+    enemy.forward(5)
+    turtle.ontimer(chase, 100)
+
+# 내가 조종할 키보드 함수 만들기
+def go_up():
+    t.setheading(90)
+    t.forward(15)
+
+def go_down():
+    # 아래(270도)로 15만큼 전진하는 코드를 완성하세요!
+    
+
+def go_left():
+    # 왼쪽(180도)으로 15만큼 전진하는 코드를 완성하세요!
+    
+
+def go_right():
+    # 오른쪽(0도)으로 15만큼 전진하는 코드를 완성하세요!
+    
+
+turtle.onkey(go_up, "Up")
+turtle.onkey(go_down, "Down")
+turtle.onkey(go_left, "Left")
+turtle.onkey(go_right, "Right")
+turtle.listen()
+
+chase()
+print("화면을 클릭하고 방향키로 빨간 거북이를 피해 도망치세요!")
+`,
+    `# 🚀 [도전 2] 잡히면 게임 오버! (충돌 감지)
+import turtle
+
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("blue")
+t.penup()
+
+enemy = turtle.Turtle()
+enemy.shape("turtle")
+enemy.color("red")
+enemy.penup()
+enemy.goto(-200, 150)
+
+def chase():
+    # 만약 적(enemy)과 나(t)의 거리가 20보다 작으면?
+    if t.distance(enemy) < 20:
+        print("잡혔다! 게임 오버!")
+        t.color("gray") # 잡히면 회색으로 변해요
+        # return을 쓰면 타이머가 다시 불리지 않고 함수가 완전히 끝나요!
+        return
+        
+    enemy.setheading(enemy.towards(t.xcor(), t.ycor()))
+    enemy.forward(5)
+    turtle.ontimer(chase, 100)
+
+def go_right():
+    t.setheading(0)
+    t.forward(15)
+def go_left():
+    t.setheading(180)
+    t.forward(15)
+def go_up():
+    t.setheading(90)
+    t.forward(15)
+def go_down():
+    t.setheading(270)
+    t.forward(15)
+
+turtle.onkey(go_up, "Up")
+turtle.onkey(go_down, "Down")
+turtle.onkey(go_left, "Left")
+turtle.onkey(go_right, "Right")
+turtle.listen()
+
+chase()
+`,
+    `# 🚀 [도전 3] 1초마다 생존 점수 올리기!
+import turtle
+
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("blue")
+t.penup()
+
+enemy = turtle.Turtle()
+enemy.shape("turtle")
+enemy.color("red")
+enemy.penup()
+enemy.goto(-200, 150)
+
+score = 0
+board = turtle.Turtle()
+board.hideturtle()
+board.penup()
+board.goto(-100, 180)
+board.write(f"생존 시간: {score}초", font=("Arial", 16, "bold"))
+
+# 점수를 올리는 타이머 함수
+def count_score():
+    global score
+    score += 1
+    board.clear()
+    board.write(f"생존 시간: {score}초", font=("Arial", 16, "bold"))
+    
+    # 1초(1000밀리초) 뒤에 자기 자신을 다시 부르세요!
+    # (여기에 코드를 작성하세요)
+    
+
+def chase():
+    if t.distance(enemy) < 20:
+        board.goto(-150, 0)
+        board.color("red")
+        board.write("GAME OVER!", font=("Arial", 40, "bold"))
+        return
+        
+    enemy.setheading(enemy.towards(t.xcor(), t.ycor()))
+    enemy.forward(5)
+    turtle.ontimer(chase, 100)
+
+# 조종 함수는 생략 (직접 자유롭게 움직여보세요!)
+def go_right(): t.setheading(0); t.forward(15)
+def go_left(): t.setheading(180); t.forward(15)
+def go_up(): t.setheading(90); t.forward(15)
+def go_down(): t.setheading(270); t.forward(15)
+
+turtle.onkey(go_up, "Up"); turtle.onkey(go_down, "Down")
+turtle.onkey(go_left, "Left"); turtle.onkey(go_right, "Right")
+turtle.listen()
+
+chase()
+count_score() # 점수 타이머 시작!
+`,
+    `# 💡 [정답] 코딩하다가 막혔을 때 참고하세요!
+
+# ------------------------------------
+# 🚀 [기본] 좀비 거북이 정답
+enemy.setheading(enemy.towards(t.xcor(), t.ycor()))
+enemy.forward(5)
+turtle.ontimer(chase, 100)
+
+# ------------------------------------
+# 🚀 [도전 1] 키보드로 도망가기 정답
+def go_down():
+    t.setheading(270)
+    t.forward(15)
+
+def go_left():
+    t.setheading(180)
+    t.forward(15)
+
+def go_right():
+    t.setheading(0)
+    t.forward(15)
+
+# ------------------------------------
+# 🚀 [도전 3] 생존 점수 타이머 정답
+turtle.ontimer(count_score, 1000)
+`
+  ];
+
+  function changeTab(index) {
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabBtns[index].classList.add('active');
+    codeArea.value = challenges[index];
+    updateHighlight();
+  }
+
+  changeTab(0);
+
+  function closeModal() {
+    modal.style.display = 'none';
+    document.getElementById('canvas-wrap').innerHTML = '<div id="mycanvas"></div>';
+    outputEl.textContent = '';
+  }
+
+  function outf(text) {
+    outputEl.textContent += text;
+  }
+
+  function builtinRead(x) {
+    if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+      throw "파일을 찾을 수 없어요: '" + x + "'";
+    }
+    return Sk.builtinFiles["files"][x];
+  }
+
+  function showPreview() {
+    modalTitle.innerHTML = '🎁 15차시: 살 떨리는 술래잡기 게임!';
+    modal.style.display = 'flex';
+    
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({ output: outf, read: builtinRead, __future__: Sk.python3 });
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450; 
+    Sk.TurtleGraphics.width = 650;
+
+    const previewCode = `
+import turtle
+import random
+
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("blue")
+t.penup()
+
+enemy = turtle.Turtle()
+enemy.shape("turtle")
+enemy.color("red")
+enemy.penup()
+enemy.goto(-200, 150)
+
+board = turtle.Turtle()
+board.hideturtle()
+board.penup()
+board.goto(-100, 180)
+board.write("자동 도망 시뮬레이션 중...", font=("Arial", 16, "bold"))
+
+def game_loop():
+    if t.distance(enemy) < 20:
+        t.color("gray")
+        board.goto(-100, 0)
+        board.color("red")
+        board.write("잡혔다!", font=("Arial", 30, "bold"))
+        return
+        
+    # 파란 거북이가 술래의 반대 방향으로 무작위 도망치기
+    t.setheading(t.towards(enemy.xcor(), enemy.ycor()) + 180 + random.randint(-45, 45))
+    t.forward(12)
+    
+    # 벽에 닿으면 화면 중앙 쪽으로 방향 틀기
+    if t.xcor() > 250 or t.xcor() < -250 or t.ycor() > 150 or t.ycor() < -150:
+        t.setheading(t.towards(0,0))
+        t.forward(20)
+        
+    # 빨간 거북이가 추적하기
+    enemy.setheading(enemy.towards(t.xcor(), t.ycor()))
+    enemy.forward(9)
+    
+    turtle.ontimer(game_loop, 100)
+
+game_loop()
+`;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, previewCode, true);
+    });
+  }
+
+  // 화면이 열리고 0.5초 뒤에 짠! 하고 나타납니다.
+  window.addEventListener('load', () => {
+    setTimeout(showPreview, 500);
+  });
+
+  function runCode() {
+    modalTitle.innerHTML = '✨ 게임 시작! (화면 클릭 후 방향키로 도망치세요)'; 
+    modal.style.display = 'flex';
+    
+    const code = codeArea.value;
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({
+      output: outf,
+      read: builtinRead,
+      __future__: Sk.python3
+    });
+    
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450; 
+    Sk.TurtleGraphics.width = 650;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, code, true);
+    }).then(
+      function () {},
+      function (err) {
+        let originalError = err.toString();
+        let friendlyMessage = "\n앗! 에러가 났어요: " + originalError;
+
+        if (originalError.includes("AttributeError") && originalError.includes("towards")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 목표물을 바라볼 때 괄호를 잊지 마세요! enemy.towards(t.xcor(), t.ycor()) 로 꼼꼼하게 적어주세요!";
+        } else if (originalError.includes("NameError") && originalError.includes("ontimer")) {
+            friendlyMessage = "\n거북이 힌트 🐢: ontimer는 turtle의 마법이에요! turtle.ontimer(함수, 시간) 형태로 적어야 합니다.";
+        } else if (originalError.includes("TypeError") && originalError.includes("ontimer")) {
+            friendlyMessage = "\n거북이 힌트 🐢: ontimer 안에 함수 이름을 적을 때는 괄호()를 빼고 이름만 적어야 해요! (예: chase() ❌ -> chase ⭕)";
+        } else if (originalError.includes("ParseError") || originalError.includes("SyntaxError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 문법 규칙을 어겼어요! 혹시 콜론(:)이나 괄호()를 빼먹지 않았나요?";
+        }
+
+        const span = document.createElement('span');
+        span.className = 'error-text';
+        span.textContent = friendlyMessage;
+        outputEl.appendChild(span);
+      }
+    );
+  }
+
+  document.getElementById('run-btn').addEventListener('click', runCode);
+  
+  window.addEventListener('click', function(event) {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+</script>
+
+</body>
+</html>

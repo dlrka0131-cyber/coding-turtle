@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<style>
+  :root {
+    --sky: linear-gradient(135deg, #7085B6, #DEF3F8);
+    --shell: #2E8B7A;
+    --shell-dark: #1F6357;
+    --sand: #FFF3D6;
+    --coral: #FF7A5C;
+    --ink: #1E2A28;
+    --panel: #16241F;
+    --panel-line: #2C3E37;
+    --tab-inactive: #D0E3DD;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    height: 100vh;
+    background: var(--sky);
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px; 
+    overflow: hidden;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 1600px;
+    flex: 1; 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    min-height: 0; 
+  }
+
+  @media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+    body { overflow: auto; }
+  }
+
+  .pane {
+    background: #FFFFFF;
+    border-radius: 18px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pane-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--sand);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--shell-dark);
+    border-bottom: 3px solid var(--shell);
+    flex-shrink: 0;
+  }
+
+  .pane-label.example-label {
+    background: #EAEAE0;
+    color: #4A5D54;
+    border-bottom: 3px solid #8BA89D;
+  }
+
+  #storybook {
+    flex: 1;
+    overflow-y: auto;
+    background: #FAFAFA;
+    padding: 24px;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .story-step {
+    background: white;
+    border: 2px solid #E0E0E0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .story-step h3 { margin: 0 0 12px 0; font-size: 1.35rem; color: var(--shell-dark); }
+  .story-step p { margin: 0 0 16px 0; font-size: 1.2rem; line-height: 1.7; color: #000000; word-break: keep-all; }
+  .story-step code { background: #FFF3D6; color: #C85742; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 1.05em; font-weight: bold; }
+  .target-box { background: #24362F; color: #D9F2E6; font-family: 'JetBrains Mono', monospace; font-weight: 600; padding: 14px 18px; border-radius: 8px; font-size: 1.2rem; margin-bottom: 12px; white-space: pre-wrap; }
+  .practice-row { display: flex; align-items: center; gap: 10px; }
+  .practice-input { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; padding: 12px 16px; border: 2px dashed #BDBDBD; border-radius: 8px; outline: none; transition: all 0.2s; white-space: pre; }
+  .practice-input:focus { border-color: var(--shell); }
+  .practice-input.correct { border: 2px solid var(--shell); background-color: #EAF6F5; color: var(--shell-dark); font-weight: bold; }
+  .check-icon { font-size: 1.6rem; min-width: 36px; }
+
+  .tab-container { display: flex; flex-wrap: nowrap; background: var(--tab-inactive); border-bottom: 3px solid var(--shell); flex-shrink: 0; overflow-x: auto; }
+  .tab-btn { flex: 1 1 auto; font-family: 'Noto Sans KR', sans-serif; font-weight: 700; background: none; border: none; padding: 12px 6px; font-size: 1.05rem; color: #5C7A70; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+  .tab-btn.active { background: var(--sand); color: var(--shell-dark); }
+  .tab-btn:hover:not(.active) { background: #C0D6CF; }
+
+  #run-btn { font-family: 'Noto Sans KR', sans-serif; background: var(--coral); color: white; border: none; border-radius: 999px; padding: 8px 24px; font-size: 1.1rem; cursor: pointer; box-shadow: 0 3px 0 #C85742; transition: transform 0.06s ease; }
+  #run-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .code-editor-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  #code-highlight, textarea#code { position: absolute; inset: 0; margin: 0; padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; overflow: auto; tab-size: 4; border: none; }
+  #code-highlight { background: var(--panel); color: #E8F3EE; pointer-events: none; }
+  #code-highlight code { font: inherit; color: inherit; white-space: inherit; }
+  .comment-token { color: #6FA88A; }
+  textarea#code { background: transparent; color: transparent; caret-color: #E8F3EE; resize: none; outline: none; }
+  textarea#code:focus-visible { box-shadow: inset 0 0 0 3px var(--shell); }
+
+  #result-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+  .modal-content { background: white; width: 90%; max-width: 800px; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; background: var(--sand); padding: 16px 24px; border-bottom: 3px solid var(--shell); }
+  .modal-header h2 { margin: 0; font-family: 'Noto Sans KR', sans-serif; font-size: 1.5rem; color: var(--shell-dark); }
+  .close-btn { background: #FF7A5C; color: white; border: none; font-size: 1.2rem; font-weight: bold; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #C85742; transition: transform 0.06s; }
+  .close-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .modal-header-actions { display: flex; align-items: center; gap: 10px; }
+  .replay-btn { background: #4A90D9; color: white; border: none; font-size: 1.1rem; font-weight: bold; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #2D6BA8; transition: transform 0.06s; }
+  .replay-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2D6BA8; }
+
+  #canvas-wrap { background: #FFFDF6; display: flex; align-items: center; justify-content: center; padding: 20px; height: 450px; }
+  #output { background: var(--panel); color: #9FE6C8; font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; padding: 16px 24px; min-height: 80px; max-height: 150px; overflow-y: auto; border-top: 1px solid var(--panel-line); white-space: pre-wrap; }
+  #output:empty::before { content: '실행 결과가 여기에 나와요'; color: #5C7A70; }
+  .error-text { color: #FFB199; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="board">
+  
+  <div class="pane">
+    <div class="pane-label example-label">
+      📖 10차시: 앗, 튕겨나왔다! (조건문)
+    </div>
+    <div id="storybook">
+      <div class="story-step">
+        <h3>1. 내 위치 확인하기 (xcor, ycor) 📍</h3>
+        <p>거북이에게 "너 지금 가로축(x축) 어디에 있어?"라고 물어볼 때는 <code>t.xcor()</code>를 써요. 세로축(y축)은 <code>t.ycor()</code>랍니다!</p>
+        <div class="target-box">print(t.xcor())</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="print(t.xcor())" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>2. 만약에~ (if 조건문) 🤔</h3>
+        <p><code>if</code>는 "만약 ~라면"이라는 뜻이에요. "만약 거북이의 x좌표가 200보다 크면" 화면 오른쪽 끝을 벗어났다는 의미죠!</p>
+        <div class="target-box">if t.xcor() > 200:</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="if t.xcor() > 200:" placeholder="위와 똑같이 쳐보세요! 콜론(:) 주의!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>3. 조건이 맞을 때 행동하기 🔄</h3>
+        <p>조건문 끝에 콜론(:)을 썼으니, 그다음 줄은 꼭 <b>스페이스바 4번</b>을 띄워야 해요. 벽에 닿았으면 180도 뒤로 돌아볼까요?</p>
+        <div class="target-box">    t.right(180)</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="    t.right(180)" placeholder="    ← 스페이스바 4번 꼭 띄우고 적어보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>4. 반대쪽도 검사하기 (elif) 🔀</h3>
+        <p><code>elif</code>는 "그것도 아니고 만약에~"라는 뜻이에요. 오른쪽 벽이 아니라면, 이번엔 왼쪽 벽(-200)에 닿았는지도 확인해봐요!</p>
+        <div class="target-box">elif t.xcor() < -200:</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="elif t.xcor() < -200:" placeholder="위와 똑같이 쳐보세요! 콜론(:) 주의!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>5. 반복하면서 계속 감시하기 🔁</h3>
+        <p><code>for</code>문 안에 조건문(if)을 넣으면, 거북이가 한 걸음씩 움직일 때마다 매번 벽에 닿았는지 확인할 수 있어요!</p>
+        <div class="target-box">for i in range(30):
+    t.forward(20)
+    if t.xcor() > 200:
+        t.right(180)</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="for i in range(30):" placeholder="30번 반복하는 for문을 만들어보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pane">
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="changeTab(0)">기본: 오른쪽 벽 튕기기</button>
+      <button class="tab-btn" onclick="changeTab(1)">도전 1: 양쪽 벽 튕기기</button>
+      <button class="tab-btn" onclick="changeTab(2)">도전 2: 사방 벽 튕기기</button>
+      <button class="tab-btn" onclick="changeTab(3)">💡 정답</button>
+    </div>
+    <div class="pane-label">
+      💻 내 코드 (조립해 보아요)
+      <button id="run-btn" type="button">▶ 실행하기</button>
+    </div>
+    <div class="code-editor-wrap">
+      <pre id="code-highlight" aria-hidden="true"><code></code></pre>
+      <textarea id="code" spellcheck="false"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="result-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modal-title">✨ 거북이의 그림 완성!</h2>
+      <div class="modal-header-actions">
+        <button class="replay-btn" onclick="showPreview()" title="다시보기">🔁</button>
+        <button class="close-btn" onclick="closeModal()">✖</button>
+      </div>
+    </div>
+    <div id="canvas-wrap"><div id="mycanvas"></div></div>
+    <div id="output" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.practice-input').forEach(input => {
+    input.addEventListener('input', function() {
+      if (this.value === this.getAttribute('data-target')) {
+        this.classList.add('correct');
+        this.nextElementSibling.textContent = '✅';
+      } else {
+        this.classList.remove('correct');
+        this.nextElementSibling.textContent = '';
+      }
+    });
+  });
+
+  const outputEl = document.getElementById('output');
+  const codeArea = document.getElementById('code');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const modal = document.getElementById('result-modal');
+  const modalTitle = document.getElementById('modal-title');
+
+  const codeHighlightEl = document.getElementById('code-highlight').querySelector('code');
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function highlightComments(text) {
+    return text.split('\n').map(function(line) {
+      var inStr = null, commentIdx = -1;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (inStr) {
+          if (ch === inStr) inStr = null;
+        } else if (ch === '"' || ch === "'") {
+          inStr = ch;
+        } else if (ch === '#') {
+          commentIdx = i;
+          break;
+        }
+      }
+      if (commentIdx === -1) return escapeHtml(line);
+      return escapeHtml(line.slice(0, commentIdx)) + '<span class="comment-token">' + escapeHtml(line.slice(commentIdx)) + '</span>';
+    }).join('\n');
+  }
+
+  function updateHighlight() {
+    codeHighlightEl.innerHTML = highlightComments(codeArea.value) + '\n';
+  }
+
+  codeArea.addEventListener('input', updateHighlight);
+  codeArea.addEventListener('scroll', function() {
+    document.getElementById('code-highlight').scrollTop = codeArea.scrollTop;
+    document.getElementById('code-highlight').scrollLeft = codeArea.scrollLeft;
+  });
+
+  const challenges = [
+    `# [기본 연습] 오른쪽 벽에 튕기는 거북이
+import turtle
+
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("green")
+t.speed(0)
+
+for i in range(30):
+    t.forward(20)
+
+    # 만약 오른쪽 벽(x좌표 200)을 넘으면 180도 돌아서 튕겨나오게 하세요!
+    # (여기에 if문 코드를 작성하세요)
+
+`,
+    `# 🚀 [도전 1] 왼쪽 벽까지 튕기기 (elif)
+import turtle
+
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("blue")
+t.speed(0)
+
+for i in range(40):
+    t.forward(20)
+
+    if t.xcor() > 200:
+        t.right(180)
+    # 왼쪽 벽(x좌표 -200)에 닿았을 때도 튕겨나오게 elif를 추가하세요!
+    # (여기에 코드를 작성하세요)
+
+`,
+    `# 🚀 [도전 2] 위아래까지! 사방으로 튕기는 거북이
+import turtle
+import random
+
+turtle.bgcolor("black")
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("yellow")
+t.speed(0)
+t.setheading(random.randint(0, 360)) # 랜덤 방향으로 출발!
+
+for i in range(80):
+    t.forward(15)
+
+    if t.xcor() > 250:
+        t.right(180)
+    elif t.xcor() < -250:
+        t.right(180)
+
+    # 위쪽 벽(y좌표 200)과 아래쪽 벽(y좌표 -200)에 닿았을 때도
+    # 180도 튕겨나오게 elif 조건을 두 개 더 추가하세요!
+    # (여기에 코드를 작성하세요)
+
+`,
+    `# 💡 [정답] 코딩하다가 막혔을 때 참고하세요!
+
+# ------------------------------------
+# 🚀 [기본] 오른쪽 벽 튕기기 정답
+if t.xcor() > 200:
+    t.right(180)
+
+# ------------------------------------
+# 🚀 [도전 1] 왼쪽 벽까지 튕기기 정답
+if t.xcor() > 200:
+    t.right(180)
+elif t.xcor() < -200:
+    t.right(180)
+
+# ------------------------------------
+# 🚀 [도전 2] 사방으로 튕기기 정답
+if t.xcor() > 250:
+    t.right(180)
+elif t.xcor() < -250:
+    t.right(180)
+elif t.ycor() > 200:
+    t.right(180)
+elif t.ycor() < -200:
+    t.right(180)
+`
+  ];
+
+  function changeTab(index) {
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabBtns[index].classList.add('active');
+    codeArea.value = challenges[index];
+    updateHighlight();
+  }
+
+  changeTab(0);
+
+  function closeModal() {
+    modal.style.display = 'none';
+    document.getElementById('canvas-wrap').innerHTML = '<div id="mycanvas"></div>';
+    outputEl.textContent = '';
+  }
+
+  function outf(text) {
+    outputEl.textContent += text;
+  }
+
+  function builtinRead(x) {
+    if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+      throw "파일을 찾을 수 없어요: '" + x + "'";
+    }
+    return Sk.builtinFiles["files"][x];
+  }
+
+  function showPreview() {
+    modalTitle.innerHTML = '🎁 10차시: 벽에 부딪히면 튕겨나가는 거북이!';
+    modal.style.display = 'flex';
+
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({ output: outf, read: builtinRead, __future__: Sk.python3 });
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450;
+    Sk.TurtleGraphics.width = 650;
+
+    const previewCode = `
+import turtle
+
+turtle.bgcolor("black")
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("yellow")
+t.speed(0)
+t.setheading(35)
+
+for i in range(80):
+    t.forward(15)
+
+    if t.xcor() > 250:
+        t.right(180)
+    elif t.xcor() < -250:
+        t.right(180)
+    elif t.ycor() > 200:
+        t.right(180)
+    elif t.ycor() < -200:
+        t.right(180)
+`;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, previewCode, true);
+    });
+  }
+
+  window.addEventListener('load', () => {
+    setTimeout(showPreview, 500);
+  });
+
+  function runCode() {
+    modalTitle.innerHTML = '✨ 거북이의 그림 완성!';
+    modal.style.display = 'flex';
+
+    const code = codeArea.value;
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({
+      output: outf,
+      read: builtinRead,
+      __future__: Sk.python3
+    });
+
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450;
+    Sk.TurtleGraphics.width = 650;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, code, true);
+    }).then(
+      function () {},
+      function (err) {
+        let originalError = err.toString();
+        let friendlyMessage = "\n앗! 에러가 났어요: " + originalError;
+
+        if (originalError.includes("ParseError") || originalError.includes("SyntaxError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 문법 규칙을 어겼어요! 혹시 if나 elif 끝에 콜론(:)을 빼먹지 않았나요?";
+        } else if (originalError.includes("IndentationError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 줄을 잘못 섰어요! if문 아래에는 꼭 스페이스바를 4번(들여쓰기) 눌러줘야 해요!";
+        } else if (originalError.includes("NameError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 컴퓨터가 모르는 단어예요. 영어 철자를 틀리진 않았는지 확인해 보세요!";
+        } else if (originalError.includes("has no attribute")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 거북이가 모르는 명령이에요. xcor, ycor 같은 철자를 다시 확인해 보세요!";
+        }
+
+        const span = document.createElement('span');
+        span.className = 'error-text';
+        span.textContent = friendlyMessage;
+        outputEl.appendChild(span);
+      }
+    );
+  }
+
+  document.getElementById('run-btn').addEventListener('click', runCode);
+
+  window.addEventListener('click', function(event) {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+</script>
+
+</body>
+</html>

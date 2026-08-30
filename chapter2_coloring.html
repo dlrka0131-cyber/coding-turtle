@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<style>
+  :root {
+    --sky: linear-gradient(135deg, #7085B6, #DEF3F8);
+    --shell: #2E8B7A;
+    --shell-dark: #1F6357;
+    --sand: #FFF3D6;
+    --coral: #FF7A5C;
+    --ink: #1E2A28;
+    --panel: #16241F;
+    --panel-line: #2C3E37;
+    --tab-inactive: #D0E3DD;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    height: 100vh;
+    background: var(--sky);
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px; 
+    overflow: hidden;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 1600px;
+    flex: 1; 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    min-height: 0; 
+  }
+
+  @media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+    body { overflow: auto; }
+  }
+
+  .pane {
+    background: #FFFFFF;
+    border-radius: 18px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pane-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--sand);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--shell-dark);
+    border-bottom: 3px solid var(--shell);
+    flex-shrink: 0;
+  }
+
+  .pane-label.example-label {
+    background: #EAEAE0;
+    color: #4A5D54;
+    border-bottom: 3px solid #8BA89D;
+  }
+
+  #storybook {
+    flex: 1;
+    overflow-y: auto;
+    background: #FAFAFA;
+    padding: 24px;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .story-step {
+    background: white;
+    border: 2px solid #E0E0E0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .story-step h3 { margin: 0 0 12px 0; font-size: 1.35rem; color: var(--shell-dark); }
+  .story-step p { margin: 0 0 16px 0; font-size: 1.2rem; line-height: 1.7; color: #000000; word-break: keep-all; }
+  .story-step code { background: #FFF3D6; color: #C85742; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 1.05em; font-weight: bold; }
+  .target-box { background: #24362F; color: #D9F2E6; font-family: 'JetBrains Mono', monospace; font-weight: 600; padding: 14px 18px; border-radius: 8px; font-size: 1.2rem; margin-bottom: 12px; white-space: pre-wrap; }
+  .practice-row { display: flex; align-items: center; gap: 10px; }
+  .practice-input { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; padding: 12px 16px; border: 2px dashed #BDBDBD; border-radius: 8px; outline: none; transition: all 0.2s; white-space: pre; }
+  .practice-input:focus { border-color: var(--shell); }
+  .practice-input.correct { border: 2px solid var(--shell); background-color: #EAF6F5; color: var(--shell-dark); font-weight: bold; }
+  .check-icon { font-size: 1.6rem; min-width: 36px; }
+
+  .tab-container { display: flex; flex-wrap: nowrap; background: var(--tab-inactive); border-bottom: 3px solid var(--shell); flex-shrink: 0; overflow-x: auto; }
+  .tab-btn { flex: 1 1 auto; font-family: 'Noto Sans KR', sans-serif; font-weight: 700; background: none; border: none; padding: 12px 6px; font-size: 1.05rem; color: #5C7A70; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+  .tab-btn.active { background: var(--sand); color: var(--shell-dark); }
+  .tab-btn:hover:not(.active) { background: #C0D6CF; }
+
+  #run-btn { font-family: 'Noto Sans KR', sans-serif; background: var(--coral); color: white; border: none; border-radius: 999px; padding: 8px 24px; font-size: 1.1rem; cursor: pointer; box-shadow: 0 3px 0 #C85742; transition: transform 0.06s ease; }
+  #run-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .code-editor-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  #code-highlight, textarea#code { position: absolute; inset: 0; margin: 0; padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; overflow: auto; tab-size: 4; border: none; }
+  #code-highlight { background: var(--panel); color: #E8F3EE; pointer-events: none; }
+  #code-highlight code { font: inherit; color: inherit; white-space: inherit; }
+  .comment-token { color: #6FA88A; }
+  textarea#code { background: transparent; color: transparent; caret-color: #E8F3EE; resize: none; outline: none; }
+  textarea#code:focus-visible { box-shadow: inset 0 0 0 3px var(--shell); }
+
+  #result-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+  .modal-content { background: white; width: 90%; max-width: 800px; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; background: var(--sand); padding: 16px 24px; border-bottom: 3px solid var(--shell); }
+  .modal-header h2 { margin: 0; font-family: 'Noto Sans KR', sans-serif; font-size: 1.5rem; color: var(--shell-dark); }
+  .close-btn { background: #FF7A5C; color: white; border: none; font-size: 1.2rem; font-weight: bold; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #C85742; transition: transform 0.06s; }
+  .close-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .modal-header-actions { display: flex; align-items: center; gap: 10px; }
+  .replay-btn { background: #4A90D9; color: white; border: none; font-size: 1.1rem; font-weight: bold; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #2D6BA8; transition: transform 0.06s; }
+  .replay-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2D6BA8; }
+
+  #canvas-wrap { background: #FFFDF6; display: flex; align-items: center; justify-content: center; padding: 20px; height: 450px; }
+  #output { background: var(--panel); color: #9FE6C8; font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; padding: 16px 24px; min-height: 80px; max-height: 150px; overflow-y: auto; border-top: 1px solid var(--panel-line); white-space: pre-wrap; }
+  #output:empty::before { content: '실행 결과가 여기에 나와요'; color: #5C7A70; }
+  .error-text { color: #FFB199; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="board">
+  
+  <div class="pane">
+    <div class="pane-label example-label">
+      📖 2차시: 알록달록 거북이 패션쇼!
+    </div>
+    <div id="storybook">
+      <div class="story-step">
+        <h3>1. 밤하늘 도화지 만들기 🌃</h3>
+        <p>기본 하얀 배경을 까만색으로 바꿀 수 있어요. <code>bgcolor</code>는 배경색을 뜻해요!</p>
+        <div class="target-box">turtle.bgcolor("black")</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target='turtle.bgcolor("black")' placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>2. 뚱뚱한 크레파스 🖍️</h3>
+        <p>거북이의 펜 굵기를 두껍게 만들어요. 숫자가 커질수록 선이 두꺼워진답니다.</p>
+        <div class="target-box">t.pensize(10)</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="t.pensize(10)" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>3. 색칠 공부 준비! 🎨</h3>
+        <p>도형의 안쪽을 색칠하고 싶을 때는 그림을 그리기 전에 꼭 <b>"색칠 시작!"</b>이라고 말해줘야 해요.</p>
+        <div class="target-box">t.begin_fill()</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="t.begin_fill()" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>4. 색칠 붓 내려놓기 ✨</h3>
+        <p>그림을 다 그렸으면 <b>"색칠 끝!"</b>이라고 말해야 물감이 짜잔~ 하고 채워져요.</p>
+        <div class="target-box">t.end_fill()</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="t.end_fill()" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>5. 펜 들고 점프! 🦘</h3>
+        <p>선은 안 그리고 자리만 옮기고 싶을 때는 펜을 위로 번쩍 들어야(<code>penup</code>) 해요. 다시 그릴 땐 <code>pendown()</code>을 써요!</p>
+        <div class="target-box">t.penup()</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="t.penup()" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pane">
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="changeTab(0)">기본: 뚱뚱한 선</button>
+      <button class="tab-btn" onclick="changeTab(1)">도전 1: 빨간 사과</button>
+      <button class="tab-btn" onclick="changeTab(2)">도전 2: 황금 별</button>
+      <button class="tab-btn" onclick="changeTab(3)">도전 3: 징검다리</button>
+      <button class="tab-btn" onclick="changeTab(4)">도전 4: 밤하늘 달님</button>
+      <button class="tab-btn" onclick="changeTab(5)">💡 정답</button>
+    </div>
+    <div class="pane-label">
+      💻 내 코드 (조립해 보아요)
+      <button id="run-btn" type="button">▶ 실행하기</button>
+    </div>
+    <div class="code-editor-wrap">
+      <pre id="code-highlight" aria-hidden="true"><code></code></pre>
+      <textarea id="code" spellcheck="false"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="result-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modal-title">✨ 거북이의 그림 완성!</h2>
+      <div class="modal-header-actions">
+        <button class="replay-btn" onclick="showPreview()" title="다시보기">🔁</button>
+        <button class="close-btn" onclick="closeModal()">✖</button>
+      </div>
+    </div>
+    <div id="canvas-wrap"><div id="mycanvas"></div></div>
+    <div id="output" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.practice-input').forEach(input => {
+    input.addEventListener('input', function() {
+      if (this.value === this.getAttribute('data-target')) {
+        this.classList.add('correct');
+        this.nextElementSibling.textContent = '✅';
+      } else {
+        this.classList.remove('correct');
+        this.nextElementSibling.textContent = '';
+      }
+    });
+  });
+
+  const outputEl = document.getElementById('output');
+  const codeArea = document.getElementById('code');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const modal = document.getElementById('result-modal');
+  const modalTitle = document.getElementById('modal-title');
+
+  const codeHighlightEl = document.getElementById('code-highlight').querySelector('code');
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function highlightComments(text) {
+    return text.split('\n').map(function(line) {
+      var inStr = null, commentIdx = -1;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (inStr) {
+          if (ch === inStr) inStr = null;
+        } else if (ch === '"' || ch === "'") {
+          inStr = ch;
+        } else if (ch === '#') {
+          commentIdx = i;
+          break;
+        }
+      }
+      if (commentIdx === -1) return escapeHtml(line);
+      return escapeHtml(line.slice(0, commentIdx)) + '<span class="comment-token">' + escapeHtml(line.slice(commentIdx)) + '</span>';
+    }).join('\n');
+  }
+
+  function updateHighlight() {
+    codeHighlightEl.innerHTML = highlightComments(codeArea.value) + '\n';
+  }
+
+  codeArea.addEventListener('input', updateHighlight);
+  codeArea.addEventListener('scroll', function() {
+    document.getElementById('code-highlight').scrollTop = codeArea.scrollTop;
+    document.getElementById('code-highlight').scrollLeft = codeArea.scrollLeft;
+  });
+
+  const challenges = [
+    `# [기본 연습] 뚱뚱한 선 긋기
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("yellow")
+
+# 1. 배경을 까만색("black")으로 바꾸고
+# 2. 펜 굵기를 10으로 만든 뒤 앞으로 100만큼 가보세요!
+
+
+`,
+    `# 🚀 [도전 1] 색칠된 빨간 사과(원) 그리기
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("red")
+
+# 원을 그리기 전에 색칠 시작을 알려줘요!
+t.begin_fill()
+t.circle(50)
+# 원을 다 그렸으면 색칠을 끝내주세요!
+# (여기에 코드를 작성하세요)
+
+
+`,
+    `# 🚀 [도전 2] 꽉 찬 황금 별 만들기
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("gold")
+
+# 그림 그리기 전에 색칠 시작!
+# (여기에 색칠 시작 코드를 적어주세요)
+
+
+for i in range(5):
+    t.forward(100)
+    t.left(144)
+
+# 그림을 다 그렸으면 색칠 마무리!
+# (여기에 색칠 끝 코드를 적어주세요)
+`,
+    `# 🚀 [도전 3] 징검다리 건너기 (점프!)
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.pensize(15)
+t.color("blue")
+
+t.forward(50)  # 첫 번째 다리
+
+# 펜을 들고(penup) 앞으로 50만큼 간 뒤, 다시 펜을 내리세요(pendown)
+# (여기에 코드를 작성하세요)
+
+
+t.forward(50)  # 두 번째 다리 (선이 끊어져 있어야 해요!)
+`,
+    `# 🚀 [도전 4] 까만 밤하늘의 노란 달님
+import turtle
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("yellow")
+
+# 1. 배경을 "black"으로 바꾸세요!
+
+
+# 2. 노란색으로 색칠된 원(반지름 80)을 그려서 달님을 만들어보세요!
+
+
+`,
+    `# 💡 [정답] 코딩하다가 막혔을 때 참고하세요!
+
+# ------------------------------------
+# 🚀 [도전 1] 색칠된 빨간 사과 정답
+t.begin_fill()
+t.circle(50)
+t.end_fill()
+
+# ------------------------------------
+# 🚀 [도전 2] 꽉 찬 황금 별 정답
+t.begin_fill()
+for i in range(5):
+    t.forward(100)
+    t.left(144)
+t.end_fill()
+
+# ------------------------------------
+# 🚀 [도전 3] 징검다리 건너기 정답
+t.penup()
+t.forward(50)
+t.pendown()
+
+# ------------------------------------
+# 🚀 [도전 4] 까만 밤하늘의 노란 달님 정답
+turtle.bgcolor("black")
+t.begin_fill()
+t.circle(80)
+t.end_fill()
+
+`
+  ];
+
+  function changeTab(index) {
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabBtns[index].classList.add('active');
+    codeArea.value = challenges[index];
+    updateHighlight();
+  }
+
+  changeTab(0);
+
+  function closeModal() {
+    modal.style.display = 'none';
+    document.getElementById('canvas-wrap').innerHTML = '<div id="mycanvas"></div>';
+    outputEl.textContent = '';
+  }
+
+  function outf(text) {
+    outputEl.textContent += text;
+  }
+
+  function builtinRead(x) {
+    if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+      throw "파일을 찾을 수 없어요: '" + x + "'";
+    }
+    return Sk.builtinFiles["files"][x];
+  }
+
+  function showPreview() {
+    modalTitle.innerHTML = '🎁 2차시: 오늘 만들 멋진 작품 미리보기!';
+    modal.style.display = 'flex';
+    
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({ output: outf, read: builtinRead, __future__: Sk.python3 });
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450; 
+    Sk.TurtleGraphics.width = 650;
+
+    const previewCode = `
+import turtle
+turtle.bgcolor("black")
+t = turtle.Turtle()
+t.shape("turtle")
+t.color("yellow")
+t.speed(5)
+
+# 꽉 찬 별 그리기
+t.begin_fill()
+for i in range(5):
+    t.forward(150)
+    t.left(144)
+t.end_fill()
+
+# 달리기
+t.penup()
+t.forward(200)
+`;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, previewCode, true);
+    });
+  }
+
+  // 화면이 열리고 0.5초 뒤에 짠! 하고 나타납니다.
+  window.addEventListener('load', () => {
+    setTimeout(showPreview, 500);
+  });
+
+  function runCode() {
+    modalTitle.innerHTML = '✨ 거북이의 그림 완성!'; 
+    modal.style.display = 'flex';
+    
+    const code = codeArea.value;
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({
+      output: outf,
+      read: builtinRead,
+      __future__: Sk.python3
+    });
+    
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450; 
+    Sk.TurtleGraphics.width = 650;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, code, true);
+    }).then(
+      function () {},
+      function (err) {
+        let originalError = err.toString();
+        let friendlyMessage = "\n앗! 에러가 났어요: " + originalError;
+
+        // 🌟 2차시 맞춤 어린이용 친절한 에러 번역기 🌟
+        if (originalError.includes("has no attribute 'torward'")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 오타가 났어요! 'torward'가 아니라 앞(전진)을 뜻하는 'forward'로 고쳐보세요!";
+        } else if (originalError.includes("has no attribute 'begin_fill'") || originalError.includes("has no attribute 'end_fill'")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 색칠하는 마법 주문의 스펠링이 틀렸어요! 밑줄(_)이 빠지진 않았는지 확인해 보세요!";
+        } else if (originalError.includes("has no attribute")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 거북이가 모르는 영어 단어예요. 철자가 틀리지 않았는지 다시 한번 확인해 보세요!";
+        } else if (originalError.includes("ParseError") || originalError.includes("SyntaxError") || originalError.includes("TokenError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 문법 규칙을 어겼어요! 혹시 명령어 끝에 괄호()를 빼먹지 않았나요?";
+        } else if (originalError.includes("IndentationError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 줄을 잘못 섰어요! for문 아래에는 꼭 스페이스바를 4번(들여쓰기) 눌러줘야 해요!";
+        } else if (originalError.includes("NameError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 파이썬은 대소문자를 엄격하게 구별한답니다. 오타가 없는지 꼼꼼히 확인해 보세요!";
+        }
+
+        const span = document.createElement('span');
+        span.className = 'error-text';
+        span.textContent = friendlyMessage;
+        outputEl.appendChild(span);
+      }
+    );
+  }
+
+  document.getElementById('run-btn').addEventListener('click', runCode);
+  
+  window.addEventListener('click', function(event) {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+</script>
+
+</body>
+</html>

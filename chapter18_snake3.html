@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>18차시: 진정한 스네이크 (꼬리 성장과 게임 오버)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<style>
+  :root {
+    --sky: linear-gradient(135deg, #7085B6, #DEF3F8);
+    --shell: #2E8B7A;
+    --shell-dark: #1F6357;
+    --sand: #FFF3D6;
+    --coral: #FF7A5C;
+    --ink: #1E2A28;
+    --panel: #16241F;
+    --panel-line: #2C3E37;
+    --tab-inactive: #D0E3DD;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    height: 100vh;
+    background: var(--sky);
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px; 
+    overflow: hidden;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 1600px;
+    flex: 1; 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    min-height: 0; 
+  }
+
+  @media (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+    body { overflow: auto; }
+  }
+
+  .pane {
+    background: #FFFFFF;
+    border-radius: 18px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .pane-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--sand);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--shell-dark);
+    border-bottom: 3px solid var(--shell);
+    flex-shrink: 0;
+  }
+
+  .pane-label.example-label {
+    background: #EAEAE0;
+    color: #4A5D54;
+    border-bottom: 3px solid #8BA89D;
+  }
+
+  #storybook {
+    flex: 1;
+    overflow-y: auto;
+    background: #FAFAFA;
+    padding: 24px;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .story-step {
+    background: white;
+    border: 2px solid #E0E0E0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .story-step h3 { margin: 0 0 12px 0; font-size: 1.35rem; color: var(--shell-dark); }
+  .story-step p { margin: 0 0 16px 0; font-size: 1.2rem; line-height: 1.7; color: #000000; word-break: keep-all; }
+  .story-step code { background: #FFF3D6; color: #C85742; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 1.05em; font-weight: bold; }
+  .target-box { background: #24362F; color: #D9F2E6; font-family: 'JetBrains Mono', monospace; font-weight: 600; padding: 14px 18px; border-radius: 8px; font-size: 1.2rem; margin-bottom: 12px; white-space: pre-wrap; }
+  .practice-row { display: flex; align-items: center; gap: 10px; }
+  .practice-input { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; padding: 12px 16px; border: 2px dashed #BDBDBD; border-radius: 8px; outline: none; transition: all 0.2s; white-space: pre; }
+  .practice-input:focus { border-color: var(--shell); }
+  .practice-input.correct { border: 2px solid var(--shell); background-color: #EAF6F5; color: var(--shell-dark); font-weight: bold; }
+  .check-icon { font-size: 1.6rem; min-width: 36px; }
+
+  .tab-container { display: flex; flex-wrap: nowrap; background: var(--tab-inactive); border-bottom: 3px solid var(--shell); flex-shrink: 0; overflow-x: auto; }
+  .tab-btn { flex: 1 1 auto; font-family: 'Noto Sans KR', sans-serif; font-weight: 700; background: none; border: none; padding: 12px 6px; font-size: 1.05rem; color: #5C7A70; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+  .tab-btn.active { background: var(--sand); color: var(--shell-dark); }
+  .tab-btn:hover:not(.active) { background: #C0D6CF; }
+
+  #run-btn { font-family: 'Noto Sans KR', sans-serif; background: var(--coral); color: white; border: none; border-radius: 999px; padding: 8px 24px; font-size: 1.1rem; cursor: pointer; box-shadow: 0 3px 0 #C85742; transition: transform 0.06s ease; }
+  #run-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .code-editor-wrap { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  #code-highlight, textarea#code { position: absolute; inset: 0; margin: 0; padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word; overflow: auto; tab-size: 4; border: none; }
+  #code-highlight { background: var(--panel); color: #E8F3EE; pointer-events: none; }
+  #code-highlight code { font: inherit; color: inherit; white-space: inherit; }
+  .comment-token { color: #6FA88A; }
+  textarea#code { background: transparent; color: transparent; caret-color: #E8F3EE; resize: none; outline: none; }
+  textarea#code:focus-visible { box-shadow: inset 0 0 0 3px var(--shell); }
+
+  #result-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+  .modal-content { background: white; width: 90%; max-width: 800px; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; background: var(--sand); padding: 16px 24px; border-bottom: 3px solid var(--shell); }
+  .modal-header h2 { margin: 0; font-family: 'Noto Sans KR', sans-serif; font-size: 1.5rem; color: var(--shell-dark); }
+  .close-btn { background: #FF7A5C; color: white; border: none; font-size: 1.2rem; font-weight: bold; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #C85742; transition: transform 0.06s; }
+  .close-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #C85742; }
+
+  .modal-header-actions { display: flex; align-items: center; gap: 10px; }
+  .replay-btn { background: #4A90D9; color: white; border: none; font-size: 1.1rem; font-weight: bold; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #2D6BA8; transition: transform 0.06s; }
+  .replay-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2D6BA8; }
+
+  #canvas-wrap { background: #FFFDF6; display: flex; align-items: center; justify-content: center; padding: 20px; height: 450px; }
+  #output { background: var(--panel); color: #9FE6C8; font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; padding: 16px 24px; min-height: 80px; max-height: 150px; overflow-y: auto; border-top: 1px solid var(--panel-line); white-space: pre-wrap; }
+  #output:empty::before { content: '실행 결과가 여기에 나와요'; color: #5C7A70; }
+  .error-text { color: #FFB199; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="board">
+  
+  <div class="pane">
+    <div class="pane-label example-label">
+      📖 18차시: 진정한 스네이크 (꼬리 성장)
+    </div>
+    <div id="storybook">
+      <div class="story-step">
+        <h3>1. 꼬리가 길어지는 마법 🟩</h3>
+        <p>먹이를 먹을 때마다 새로운 네모 거북이를 만들어서 리스트 맨 뒤에 추가(`append`)해 주면 꼬리가 길어져요!</p>
+        <div class="target-box">snakes.append(new_body)</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="snakes.append(new_body)" placeholder="위와 똑같이 쳐보세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>2. 리스트의 길이 재기 (len) 📏</h3>
+        <p>꼬리가 길어졌으니 앞 꼬리 따라가기 `for`문도 바뀌어야 해요. `len(snakes)`는 뱀 몸통이 총 몇 개인지 숫자로 알려줍니다!</p>
+        <div class="target-box">for i in range(len(snakes)-1, 0, -1):</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="for i in range(len(snakes)-1, 0, -1):" placeholder="맨 끝 꼬리부터 1번까지 거꾸로 가요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>3. 벽에 쿵! (게임 오버) 💥</h3>
+        <p>뱀의 머리(`snakes[0]`)가 화면 끝(280)을 넘어가면 게임이 끝나는 로직을 만듭니다.</p>
+        <div class="target-box">if snakes[0].xcor() > 280:
+    return</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="if snakes[0].xcor() > 280:
+    return" placeholder="return을 쓰면 마법(함수)이 멈춰요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+
+      <div class="story-step">
+        <h3>4. 내 몸을 깨물면 안 돼! (슬라이싱) 😱</h3>
+        <p><code>snakes[1:]</code>은 머리(0번)를 뺀 나머지 모든 몸통을 의미해요. 몸통 중 하나라도 머리와 부딪혔는지 검사합니다!</p>
+        <div class="target-box">for body in snakes[1:]:
+    if snakes[0].distance(body) < 10:
+        return</div>
+        <div class="practice-row">
+          <input type="text" class="practice-input" data-target="for body in snakes[1:]:
+    if snakes[0].distance(body) < 10:
+        return" placeholder="들여쓰기(스페이스바)에 주의해서 입력하세요!" autocomplete="off">
+          <span class="check-icon"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pane">
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="changeTab(0)">기본: 먹고 자라나기</button>
+      <button class="tab-btn" onclick="changeTab(1)">도전 1: 벽에 부딪히면 끝!</button>
+      <button class="tab-btn" onclick="changeTab(2)">도전 2: 꼬리 앙 물면 끝!</button>
+      <button class="tab-btn" onclick="changeTab(3)">도전 3: 완벽한 스네이크 완성</button>
+      <button class="tab-btn" onclick="changeTab(4)">💡 정답</button>
+    </div>
+    <div class="pane-label">
+      💻 내 코드 (조립해 보아요)
+      <button id="run-btn" type="button">▶ 실행하기</button>
+    </div>
+    <div class="code-editor-wrap">
+      <pre id="code-highlight" aria-hidden="true"><code></code></pre>
+      <textarea id="code" spellcheck="false"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="result-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modal-title">✨ 거북이의 그림 완성!</h2>
+      <div class="modal-header-actions">
+        <button class="replay-btn" onclick="showPreview()" title="다시보기">🔁</button>
+        <button class="close-btn" onclick="closeModal()">✖</button>
+      </div>
+    </div>
+    <div id="canvas-wrap"><div id="mycanvas"></div></div>
+    <div id="output" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.practice-input').forEach(input => {
+    input.addEventListener('input', function() {
+      if (this.value === this.getAttribute('data-target')) {
+        this.classList.add('correct');
+        this.nextElementSibling.textContent = '✅';
+      } else {
+        this.classList.remove('correct');
+        this.nextElementSibling.textContent = '';
+      }
+    });
+  });
+
+  const outputEl = document.getElementById('output');
+  const codeArea = document.getElementById('code');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const modal = document.getElementById('result-modal');
+  const modalTitle = document.getElementById('modal-title');
+
+  const codeHighlightEl = document.getElementById('code-highlight').querySelector('code');
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function highlightComments(text) {
+    return text.split('\n').map(function(line) {
+      var inStr = null, commentIdx = -1;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line[i];
+        if (inStr) {
+          if (ch === inStr) inStr = null;
+        } else if (ch === '"' || ch === "'") {
+          inStr = ch;
+        } else if (ch === '#') {
+          commentIdx = i;
+          break;
+        }
+      }
+      if (commentIdx === -1) return escapeHtml(line);
+      return escapeHtml(line.slice(0, commentIdx)) + '<span class="comment-token">' + escapeHtml(line.slice(commentIdx)) + '</span>';
+    }).join('\n');
+  }
+
+  function updateHighlight() {
+    codeHighlightEl.innerHTML = highlightComments(codeArea.value) + '\n';
+  }
+
+  codeArea.addEventListener('input', updateHighlight);
+  codeArea.addEventListener('scroll', function() {
+    document.getElementById('code-highlight').scrollTop = codeArea.scrollTop;
+    document.getElementById('code-highlight').scrollLeft = codeArea.scrollLeft;
+  });
+
+  const challenges = [
+    `# [기본 연습] 사과를 먹으면 꼬리가 길어져요!
+import turtle
+import random
+
+turtle.tracer(0)
+snakes = []
+
+# 처음에는 머리 하나만!
+t = turtle.Turtle()
+t.shape("square")
+t.color("green")
+t.penup()
+snakes.append(t)
+
+food = turtle.Turtle()
+food.shape("circle")
+food.color("red")
+food.penup()
+food.goto(100, 0)
+
+def move():
+    # 1. 꼬리가 길어질 수 있으니 len()으로 길이 재서 당겨오기
+    for i in range(len(snakes)-1, 0, -1):
+        snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())
+    snakes[0].forward(20)
+    
+    # 2. 사과를 먹었을 때!
+    if snakes[0].distance(food) < 20:
+        food.goto(random.randint(-200, 200), random.randint(-150, 150))
+        
+        # 새로운 꼬리를 만들어서 리스트에 추가(append) 하세요!
+        new_body = turtle.Turtle()
+        new_body.shape("square")
+        new_body.color("green")
+        new_body.penup()
+        # (여기에 append 코드를 적어주세요)
+        
+        
+    turtle.update()
+    turtle.ontimer(move, 100)
+
+def go_up():
+    if snakes[0].heading() != 270: snakes[0].setheading(90)
+def go_down():
+    if snakes[0].heading() != 90: snakes[0].setheading(270)
+def go_left():
+    if snakes[0].heading() != 0: snakes[0].setheading(180)
+def go_right():
+    if snakes[0].heading() != 180: snakes[0].setheading(0)
+
+turtle.onkey(go_up, "Up"); turtle.onkey(go_down, "Down")
+turtle.onkey(go_left, "Left"); turtle.onkey(go_right, "Right")
+turtle.listen()
+move()
+`,
+    `# 🚀 [도전 1] 벽에 부딪히면 게임 오버!
+import turtle
+import random
+
+turtle.tracer(0)
+snakes = []
+t = turtle.Turtle()
+t.shape("square"); t.color("green"); t.penup()
+snakes.append(t)
+
+food = turtle.Turtle()
+food.shape("circle"); food.color("red"); food.penup()
+food.goto(100, 0)
+
+def move():
+    # 머리(snakes[0])의 좌표가 좌우 300, 상하 200을 넘어가면 죽어요!
+    if snakes[0].xcor() > 300 or snakes[0].xcor() < -300 or snakes[0].ycor() > 200 or snakes[0].ycor() < -200:
+        print("벽에 쿵! 게임 오버!")
+        snakes[0].color("gray")
+        turtle.update()
+        return # 타이머 멈춤!
+        
+    for i in range(len(snakes)-1, 0, -1):
+        snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())
+    snakes[0].forward(20)
+    
+    if snakes[0].distance(food) < 20:
+        food.goto(random.randint(-280, 280), random.randint(-180, 180))
+        new_body = turtle.Turtle()
+        new_body.shape("square"); new_body.color("green"); new_body.penup()
+        snakes.append(new_body)
+        
+    turtle.update()
+    turtle.ontimer(move, 100)
+
+def go_up():
+    if snakes[0].heading() != 270: snakes[0].setheading(90)
+def go_down():
+    if snakes[0].heading() != 90: snakes[0].setheading(270)
+def go_left():
+    if snakes[0].heading() != 0: snakes[0].setheading(180)
+def go_right():
+    if snakes[0].heading() != 180: snakes[0].setheading(0)
+
+turtle.onkey(go_up, "Up"); turtle.onkey(go_down, "Down")
+turtle.onkey(go_left, "Left"); turtle.onkey(go_right, "Right")
+turtle.listen()
+move()
+`,
+    `# 🚀 [도전 2] 내 꼬리를 물면 게임 오버!
+import turtle
+import random
+
+turtle.tracer(0)
+snakes = []
+t = turtle.Turtle()
+t.shape("square"); t.color("green"); t.penup()
+snakes.append(t)
+
+food = turtle.Turtle()
+food.shape("circle"); food.color("red"); food.penup()
+food.goto(100, 0)
+
+def move():
+    for i in range(len(snakes)-1, 0, -1):
+        snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())
+    snakes[0].forward(20)
+    
+    # 내 머리가 내 몸통(1번부터 끝까지) 중 하나에라도 닿았는지 검사!
+    for body in snakes[1:]:
+        if snakes[0].distance(body) < 10:
+            print("앗, 내 꼬리야! 게임 오버!")
+            snakes[0].color("gray")
+            turtle.update()
+            return # 여기서 완전히 멈춰요!
+    
+    if snakes[0].distance(food) < 20:
+        food.goto(random.randint(-200, 200), random.randint(-150, 150))
+        new_body = turtle.Turtle()
+        new_body.shape("square"); new_body.color("green"); new_body.penup()
+        snakes.append(new_body)
+        
+    turtle.update()
+    turtle.ontimer(move, 100)
+
+# 조종 함수는 생략
+def go_up():
+    if snakes[0].heading() != 270: snakes[0].setheading(90)
+def go_down():
+    if snakes[0].heading() != 90: snakes[0].setheading(270)
+def go_left():
+    if snakes[0].heading() != 0: snakes[0].setheading(180)
+def go_right():
+    if snakes[0].heading() != 180: snakes[0].setheading(0)
+
+turtle.onkey(go_up, "Up"); turtle.onkey(go_down, "Down")
+turtle.onkey(go_left, "Left"); turtle.onkey(go_right, "Right")
+turtle.listen()
+move()
+`,
+    `# 🚀 [최종] 완벽한 스네이크 게임 (점수판 포함!)
+import turtle
+import random
+
+turtle.tracer(0)
+score = 0
+
+board = turtle.Turtle()
+board.hideturtle()
+board.penup()
+board.goto(0, 180)
+board.write(f"점수: {score}", align="center", font=("Arial", 20, "bold"))
+
+snakes = []
+t = turtle.Turtle()
+t.shape("square"); t.color("green"); t.penup()
+snakes.append(t)
+
+food = turtle.Turtle()
+food.shape("circle"); food.color("red"); food.penup()
+food.goto(100, 0)
+
+def move():
+    global score
+    
+    # 1. 벽 충돌 검사
+    if snakes[0].xcor() > 310 or snakes[0].xcor() < -310 or snakes[0].ycor() > 210 or snakes[0].ycor() < -210:
+        board.goto(0, 0)
+        board.color("red")
+        board.write("GAME OVER", align="center", font=("Arial", 40, "bold"))
+        turtle.update()
+        return
+        
+    # 2. 꼬리 당겨오기
+    for i in range(len(snakes)-1, 0, -1):
+        snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())
+    snakes[0].forward(20)
+    
+    # 3. 꼬리 충돌 검사
+    for body in snakes[1:]:
+        if snakes[0].distance(body) < 10:
+            board.goto(0, 0)
+            board.color("red")
+            board.write("GAME OVER", align="center", font=("Arial", 40, "bold"))
+            turtle.update()
+            return
+            
+    # 4. 먹이 먹기
+    if snakes[0].distance(food) < 20:
+        food.goto(random.randint(-280, 280), random.randint(-180, 180))
+        new_body = turtle.Turtle()
+        new_body.shape("square"); new_body.color("green"); new_body.penup()
+        snakes.append(new_body)
+        
+        score += 10
+        board.clear()
+        board.write(f"점수: {score}", align="center", font=("Arial", 20, "bold"))
+        
+    turtle.update()
+    turtle.ontimer(move, 100)
+
+def go_up():
+    if snakes[0].heading() != 270: snakes[0].setheading(90)
+def go_down():
+    if snakes[0].heading() != 90: snakes[0].setheading(270)
+def go_left():
+    if snakes[0].heading() != 0: snakes[0].setheading(180)
+def go_right():
+    if snakes[0].heading() != 180: snakes[0].setheading(0)
+
+turtle.onkey(go_up, "Up"); turtle.onkey(go_down, "Down")
+turtle.onkey(go_left, "Left"); turtle.onkey(go_right, "Right")
+turtle.listen()
+move()
+`,
+    `# 💡 [정답] 코딩하다가 막혔을 때 참고하세요!
+
+# ------------------------------------
+# 🚀 [기본] 꼬리 길어지기 정답
+new_body = turtle.Turtle()
+new_body.shape("square")
+new_body.color("green")
+new_body.penup()
+snakes.append(new_body)
+
+# ------------------------------------
+# [도전 3] 탭을 누르면 모든 기능이 합쳐진
+# 완벽한 스네이크 게임의 정답 코드를 볼 수 있습니다!
+`
+  ];
+
+  function changeTab(index) {
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabBtns[index].classList.add('active');
+    codeArea.value = challenges[index];
+    updateHighlight();
+  }
+
+  changeTab(0);
+
+  function closeModal() {
+    modal.style.display = 'none';
+    document.getElementById('canvas-wrap').innerHTML = '<div id="mycanvas"></div>';
+    outputEl.textContent = '';
+  }
+
+  function outf(text) {
+    outputEl.textContent += text;
+  }
+
+  function builtinRead(x) {
+    if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+      throw "파일을 찾을 수 없어요: '" + x + "'";
+    }
+    return Sk.builtinFiles["files"][x];
+  }
+
+  function showPreview() {
+    modalTitle.innerHTML = '🎁 18차시: 진정한 스네이크 게임 완성!';
+    modal.style.display = 'flex';
+    
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({ output: outf, read: builtinRead, __future__: Sk.python3 });
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450; 
+    Sk.TurtleGraphics.width = 650;
+
+    const previewCode = `
+import turtle
+import random
+
+turtle.tracer(0)
+snakes = []
+for i in range(5):
+    t = turtle.Turtle()
+    t.shape("square")
+    t.color("green")
+    t.penup()
+    t.goto(-20 * i, 0)
+    snakes.append(t)
+
+food = turtle.Turtle()
+food.shape("circle")
+food.color("red")
+food.penup()
+food.goto(100, 0)
+
+board = turtle.Turtle()
+board.hideturtle()
+board.penup()
+board.goto(0, 180)
+board.write("자동 플레이 (점수판 및 성장 테스트)", align="center", font=("Arial", 16, "bold"))
+
+def move():
+    for i in range(len(snakes)-1, 0, -1):
+        snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())
+    
+    snakes[0].setheading(snakes[0].towards(food.xcor(), food.ycor()))
+    h = snakes[0].heading()
+    if h >= 315 or h < 45: snakes[0].setheading(0)
+    elif h >= 45 and h < 135: snakes[0].setheading(90)
+    elif h >= 135 and h < 225: snakes[0].setheading(180)
+    else: snakes[0].setheading(270)
+    
+    snakes[0].forward(20)
+    
+    if snakes[0].distance(food) < 20:
+        food.goto(random.randint(-200, 200), random.randint(-150, 150))
+        nb = turtle.Turtle()
+        nb.shape("square"); nb.color("green"); nb.penup()
+        snakes.append(nb)
+        
+    turtle.update()
+    turtle.ontimer(move, 200)
+
+move()
+`;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, previewCode, true);
+    });
+  }
+
+  // 화면이 열리고 0.5초 뒤에 짠! 하고 나타납니다.
+  window.addEventListener('load', () => {
+    setTimeout(showPreview, 500);
+  });
+
+  function runCode() {
+    modalTitle.innerHTML = '✨ 게임 시작! (화면 클릭 후 방향키 조종)'; 
+    modal.style.display = 'flex';
+    
+    const code = codeArea.value;
+    outputEl.textContent = '';
+    const canvasWrap = document.getElementById('canvas-wrap');
+    canvasWrap.innerHTML = '<div id="mycanvas"></div>';
+
+    Sk.pre = 'output';
+    Sk.configure({
+      output: outf,
+      read: builtinRead,
+      __future__: Sk.python3
+    });
+    
+    Sk.TurtleGraphics = Sk.TurtleGraphics || {};
+    Sk.TurtleGraphics.target = 'mycanvas';
+    Sk.TurtleGraphics.height = 450; 
+    Sk.TurtleGraphics.width = 650;
+
+    Sk.misceval.asyncToPromise(function () {
+      return Sk.importMainWithBody("<stdin>", false, code, true);
+    }).then(
+      function () {},
+      function (err) {
+        let originalError = err.toString();
+        let friendlyMessage = "\n앗! 에러가 났어요: " + originalError;
+
+        if (originalError.includes("NameError") && originalError.includes("new_body")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 새로 만든 꼬리(거북이)의 이름이 new_body가 맞는지 철자를 확인해 보세요!";
+        } else if (originalError.includes("TypeError") && originalError.includes("len")) {
+            friendlyMessage = "\n거북이 힌트 🐢: len() 괄호 안에는 길이를 잴 리스트 이름(snakes)이 들어가야 해요!";
+        } else if (originalError.includes("ParseError") || originalError.includes("SyntaxError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 문법 규칙을 어겼어요! 혹시 for문이나 if문 끝에 콜론(:)을 빼먹지 않았나요?";
+        } else if (originalError.includes("IndentationError")) {
+            friendlyMessage = "\n거북이 힌트 🐢: 들여쓰기(스페이스바)를 꼼꼼히 확인해 보세요! 조건문 아래는 반드시 4칸을 띄워야 합니다.";
+        }
+
+        const span = document.createElement('span');
+        span.className = 'error-text';
+        span.textContent = friendlyMessage;
+        outputEl.appendChild(span);
+      }
+    );
+  }
+
+  document.getElementById('run-btn').addEventListener('click', runCode);
+  
+  window.addEventListener('click', function(event) {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+</script>
+
+</body>
+</html>
