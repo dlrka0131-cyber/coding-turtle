@@ -82,8 +82,8 @@ async function getStudentName() {
 }
 
 // ---------- 선생님-학생 편지함 ----------
-// 선생님 전용 계정의 로그인 이메일이에요. (usernameToEmail("admin") 결과와 같아요)
-const TEACHER_EMAIL = 'admin' + FAKE_EMAIL_DOMAIN;
+// 선생님 전용 계정의 로그인 이메일이에요. (usernameToEmail("김정이") 결과와 같아요)
+const TEACHER_EMAIL = '김정이' + FAKE_EMAIL_DOMAIN;
 
 function isTeacher(user) {
   return !!user && user.email === TEACHER_EMAIL;
