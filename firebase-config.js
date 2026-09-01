@@ -80,3 +80,66 @@ async function getStudentName() {
   const username = data.username || '학생';
   return (grade + ' ' + username).trim();
 }
+
+// ---------- 선생님-학생 편지함 ----------
+// 선생님 전용 계정의 로그인 이메일이에요. (usernameToEmail("admin") 결과와 같아요)
+const TEACHER_EMAIL = 'admin' + FAKE_EMAIL_DOMAIN;
+
+function isTeacher(user) {
+  return !!user && user.email === TEACHER_EMAIL;
+}
+
+// 학생이 선생님께 편지를 써서 보내요.
+async function sendLetterToTeacher(text) {
+  const user = auth.currentUser;
+  if (!user) return;
+  await db.collection('students').doc(user.uid).set({
+    letters: firebase.firestore.FieldValue.arrayUnion({ text: text.trim(), createdAt: new Date().toISOString() })
+  }, { merge: true });
+}
+
+// 로그인한 학생에게 아직 확인하지 않은 선생님 메시지가 있으면 가져와요.
+async function getUnreadTeacherMessage() {
+  const user = auth.currentUser;
+  if (!user) return null;
+  const doc = await db.collection('students').doc(user.uid).get();
+  if (!doc.exists) return null;
+  const msg = doc.data().teacherMessage;
+  return (msg && !msg.read) ? msg : null;
+}
+
+// 학생이 선생님 메시지를 확인했다고 표시해요.
+async function markTeacherMessageRead() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const doc = await db.collection('students').doc(user.uid).get();
+  if (!doc.exists) return;
+  const msg = doc.data().teacherMessage;
+  if (!msg) return;
+  await db.collection('students').doc(user.uid).set({
+    teacherMessage: Object.assign({}, msg, { read: true })
+  }, { merge: true });
+}
+
+// (관리자 전용) 모든 학생의 기록을 가져와요.
+async function getAllStudents() {
+  const snap = await db.collection('students').get();
+  return snap.docs.map(function (doc) {
+    return Object.assign({ uid: doc.id }, doc.data());
+  });
+}
+
+// (관리자 전용) 특정 학생에게 메시지를 보내요.
+async function sendMessageToStudent(uid, text) {
+  await db.collection('students').doc(uid).set({
+    teacherMessage: { text: text.trim(), createdAt: new Date().toISOString(), read: false }
+  }, { merge: true });
+}
+
+// (관리자 전용) 더 이상 관리하지 않는 학생의 기록을 삭제해요.
+// 참고: 이 사이트는 백엔드(Admin SDK)가 없어서 로그인 계정 자체는 지울 수 없고,
+// Firestore에 저장된 기록(이름/진도/편지/메시지)만 지워져요. 같은 이름으로 다시 로그인하면
+// 새 학생처럼 빈 기록으로 다시 시작돼요.
+async function deleteStudent(uid) {
+  await db.collection('students').doc(uid).delete();
+}

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root {
+    --sky: linear-gradient(135deg, #7085B6, #DEF3F8);
+    --shell: #2E8B7A;
+    --shell-dark: #1F6357;
+    --sand: #FFF3D6;
+    --coral: #FF7A5C;
+    --ink: #1E2A28;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--sky);
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--ink);
+    padding: 32px 20px 60px;
+  }
+
+  .wrap { max-width: 900px; margin: 0 auto; }
+
+  a.home-link {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 500;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: white;
+    color: var(--shell-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    text-decoration: none;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.12);
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--shell-dark);
+    font-weight: 900;
+  }
+
+  .auth-box {
+    max-width: 420px;
+    margin: 40px auto;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(12px);
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(31,99,87,0.15);
+  }
+
+  .auth-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .auth-row input {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 12px;
+    border: 2px solid #C9DCD5;
+    border-radius: 10px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+  }
+  .auth-row input:focus { border-color: var(--shell); }
+
+  .auth-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    background: var(--shell);
+    color: white;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .auth-error {
+    display: block;
+    margin-top: 10px;
+    color: #C0392B;
+    font-size: 0.85rem;
+    text-align: center;
+    min-height: 1.2em;
+  }
+
+  #admin-panel { display: none; }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  #logout-btn {
+    border: none;
+    background: var(--coral);
+    color: white;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .student-card {
+    background: rgba(255,255,255,0.85);
+    border-radius: 18px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  }
+
+  .student-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .student-name { font-weight: 700; font-size: 1.1rem; color: var(--shell-dark); }
+  .student-meta { font-size: 0.85rem; color: #5C7A70; }
+
+  .progress-pill {
+    background: var(--sand);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--shell-dark);
+  }
+
+  .delete-student-btn {
+    border: none;
+    background: none;
+    color: #C0392B;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+  }
+  .delete-student-btn:hover { background: #FDEDEC; }
+  .delete-student-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .letters-box {
+    background: #F5F9FC;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+  }
+  .letters-box .letter-item { margin-bottom: 6px; white-space: pre-wrap; }
+  .letters-box .letter-item:last-child { margin-bottom: 0; }
+  .letters-box .letter-date { color: #8A9E97; font-size: 0.78rem; }
+  .no-letters { color: #8A9E97; font-size: 0.85rem; font-style: italic; }
+
+  .message-row { display: flex; gap: 8px; }
+  .message-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid #C9DCD5;
+    border-radius: 10px;
+    font-family: 'Noto Sans KR', sans-serif;
+    outline: none;
+  }
+  .message-row button {
+    border: none;
+    background: #4A90D9;
+    color: white;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .message-sent-badge {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--shell-dark);
+  }
+  .message-pending-badge {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: #C85742;
+  }
+
+  #student-list-empty { text-align: center; color: #3E534E; }
+</style>
+</head>
+<body>
+
+<a class="home-link" href="index.html" title="학생 페이지로"><i class="fa-solid fa-house"></i></a>
+
+<div class="wrap">
+  <h1>🐢 관리자 페이지</h1>
+
+  <div id="auth-box" class="auth-box">
+    <p style="text-align:center; color:#3E534E; margin-top:0;">선생님 계정으로 로그인해주세요.</p>
+    <div class="auth-row">
+      <input id="admin-username" placeholder="관리자 이름" autocomplete="username">
+    </div>
+    <div class="auth-row" style="margin-top:8px;">
+      <input id="admin-password" type="password" placeholder="비밀번호" autocomplete="current-password">
+    </div>
+    <button id="admin-login-btn" class="auth-btn">로그인</button>
+    <span id="admin-auth-error" class="auth-error"></span>
+  </div>
+
+  <div id="admin-panel">
+    <div class="toolbar">
+      <span id="admin-welcome"></span>
+      <button id="logout-btn">로그아웃</button>
+    </div>
+
+    <div id="student-list"></div>
+    <p id="student-list-empty" style="display:none;">아직 가입한 학생이 없어요.</p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+  const TOTAL_CHAPTERS = 19;
+
+  document.getElementById('admin-login-btn').addEventListener('click', async () => {
+    const errEl = document.getElementById('admin-auth-error');
+    errEl.textContent = '';
+    const username = document.getElementById('admin-username').value;
+    const password = document.getElementById('admin-password').value;
+    if (!username.trim() || !password) {
+      errEl.textContent = '이름과 비밀번호를 입력해주세요.';
+      return;
+    }
+    try {
+      const user = await logInStudent(username, password);
+      if (!isTeacher(user)) {
+        errEl.textContent = '관리자 계정이 아니에요.';
+        await logOutStudent();
+      }
+    } catch (e) {
+      errEl.textContent = '로그인 실패: 이름 또는 비밀번호를 확인해주세요.';
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', () => logOutStudent());
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      return d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate() + ' ' +
+        String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    } catch (e) { return ''; }
+  }
+
+  function renderStudentCard(student) {
+    const progressCount = Object.keys(student.progress || {}).filter(k => student.progress[k]).length;
+    const letters = student.letters || [];
+    const lettersHtml = letters.length
+      ? letters.slice().reverse().map(l => `
+          <div class="letter-item">
+            <div class="letter-date">${formatDate(l.createdAt)}</div>
+            ${escapeHtml(l.text)}
+          </div>
+        `).join('')
+      : '<span class="no-letters">아직 보낸 편지가 없어요.</span>';
+
+    const msg = student.teacherMessage;
+    const msgBadge = msg
+      ? (msg.read
+          ? `<span class="message-sent-badge">✅ 확인함: ${escapeHtml(msg.text)}</span>`
+          : `<span class="message-pending-badge">⏳ 아직 안 읽음: ${escapeHtml(msg.text)}</span>`)
+      : '';
+
+    return `
+      <div class="student-card" data-uid="${student.uid}">
+        <div class="student-head">
+          <div>
+            <span class="student-name">${escapeHtml(student.username || '(이름 없음)')}</span>
+            <span class="student-meta"> · ${escapeHtml(student.school || '')} ${escapeHtml(student.grade || '')}</span>
+          </div>
+          <span class="progress-pill">${progressCount} / ${TOTAL_CHAPTERS} 완료</span>
+          <button class="delete-student-btn" title="이 학생 삭제">🗑️ 삭제</button>
+        </div>
+        <div class="letters-box">${lettersHtml}</div>
+        <div class="message-row">
+          <input type="text" class="message-input" placeholder="이 학생에게 보낼 메시지를 적어주세요">
+          <button class="message-send-btn">보내기</button>
+        </div>
+        ${msgBadge}
+      </div>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  async function loadStudents() {
+    const students = await getAllStudents();
+    const filtered = students.filter(s => s.uid && !isTeacherStudentDoc(s));
+    const listEl = document.getElementById('student-list');
+    const emptyEl = document.getElementById('student-list-empty');
+    if (!filtered.length) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    listEl.innerHTML = filtered.map(renderStudentCard).join('');
+
+    listEl.querySelectorAll('.student-card').forEach(card => {
+      const uid = card.dataset.uid;
+      const name = card.querySelector('.student-name').textContent;
+      const input = card.querySelector('.message-input');
+      const btn = card.querySelector('.message-send-btn');
+      btn.addEventListener('click', async () => {
+        const text = input.value;
+        if (!text.trim()) return;
+        btn.disabled = true;
+        try {
+          await sendMessageToStudent(uid, text);
+          input.value = '';
+          await loadStudents();
+        } catch (e) {
+          alert('메시지 전송에 실패했어요. 다시 시도해주세요.');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      const deleteBtn = card.querySelector('.delete-student-btn');
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm(`${name} 학생의 기록을 정말 삭제할까요? (이름/진도/편지/메시지가 모두 사라지고 되돌릴 수 없어요)`)) return;
+        deleteBtn.disabled = true;
+        try {
+          await deleteStudent(uid);
+          await loadStudents();
+        } catch (e) {
+          alert('삭제에 실패했어요. 다시 시도해주세요.');
+          deleteBtn.disabled = false;
+        }
+      });
+    });
+  }
+
+  function isTeacherStudentDoc(s) {
+    return false; // 관리자 계정도 회원가입 흐름으로 만들어지면 students 컬렉션에 자기 문서가 생기는데,
+                  // TEACHER_EMAIL로 로그인한 사람은 admin.html만 쓰므로 학생 목록에 자기 자신이 껴도 무해해요.
+                  // 필요하면 여기서 student.username 등으로 걸러낼 수 있어요.
+  }
+
+  onAuthChange(async (user) => {
+    if (user && isTeacher(user)) {
+      document.getElementById('auth-box').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      document.getElementById('admin-welcome').textContent = '👋 관리자님, 환영해요!';
+      await loadStudents();
+    } else {
+      document.getElementById('auth-box').style.display = 'block';
+      document.getElementById('admin-panel').style.display = 'none';
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -6,14 +6,19 @@
 <title>거북이 코딩 놀이터</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Baloo+2:wght@500;700;800&family=Dongle:wght@700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --sky: linear-gradient(135deg, #7085B6, #DEF3F8);
+    --sky: linear-gradient(180deg, #6FD8EC 0%, #1FA8D8 25%, #0466C8 60%, #023E7D 100%);
     --shell: #2E8B7A;
     --shell-dark: #1F6357;
     --sand: #FFF3D6;
     --coral: #FF7A5C;
+    --coral-dark: #D94F4F;
+    --leaf: #2EC4B6;
+    --leaf-dark: #1A9E92;
+    --sun: #FFD166;
+    --deep: #023E7D;
     --ink: #1E2A28;
     --panel: #16241F;
   }
@@ -35,51 +40,152 @@
     overflow-x: hidden;
   }
 
-  .wrap { max-width: 1100px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+  /* ---------- 은은한 태양광 ---------- */
+  .sunlight {
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140vw;
+    height: 55vh;
+    background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ---------- 둥둥 떠다니는 거품 ---------- */
+  .bubble {
+    position: fixed;
+    bottom: -60px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.15) 70%);
+    animation: rise linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) translateX(0); opacity: 0.9; }
+    100% { transform: translateY(-115vh) translateX(20px); opacity: 0; }
+  }
+
+  .wave-floor {
+    position: fixed;
+    bottom: 0; left: 0; width: 100%;
+    height: 18vh;
+    background: linear-gradient(180deg, rgba(2,62,125,0) 0%, rgba(1,39,80,0.55) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .seaweed {
+    position: fixed;
+    bottom: 0;
+    width: 26px;
+    height: 90px;
+    background: var(--leaf);
+    border-radius: 40px 40px 0 0;
+    transform-origin: bottom center;
+    animation: sway 3.4s ease-in-out infinite;
+    z-index: 1;
+    opacity: 0.85;
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+  }
+
+  .mascot-turtle {
+    position: fixed;
+    font-size: 5.5rem;
+    display: inline-block;
+    filter: drop-shadow(0 10px 14px rgba(0,0,0,0.25));
+    animation: bob 2.6s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50% { transform: translateY(-14px) rotate(4deg); }
+  }
+
+  .mascot-fish {
+    position: fixed;
+    display: inline-block;
+    font-size: 2.6rem;
+    filter: drop-shadow(0 6px 8px rgba(0,0,0,0.2));
+    z-index: 2;
+  }
+  .fish-1 { animation: swim-right 5s ease-in-out infinite; }
+  .fish-2 { animation: swim-left 4.5s ease-in-out infinite; transform: scaleX(-1); }
+  .fish-3 { font-size: 2rem; animation: swim-right 4s ease-in-out infinite; animation-delay: 0.8s; }
+  @keyframes swim-right {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    50% { transform: translateX(14px) translateY(-10px); }
+  }
+  @keyframes swim-left {
+    0%, 100% { transform: scaleX(-1) translateX(0) translateY(0); }
+    50% { transform: scaleX(-1) translateX(14px) translateY(-8px); }
+  }
+
+  .star-deco {
+    position: fixed;
+    display: inline-block;
+    font-size: 1.4rem;
+    animation: twinkle 2s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+    z-index: 2;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.5; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; width: 100%; position: relative; z-index: 5; }
 
   header {
     text-align: center;
     margin-bottom: 64px;
   }
 
-  .turtle-icon {
-    display: inline-block;
-    animation: turtle-bounce 2.6s ease-in-out infinite;
-  }
-  @keyframes turtle-bounce {
-    0%, 100% { transform: translateY(0) rotate(-6deg); }
-    50% { transform: translateY(-8px) rotate(6deg); }
-  }
-
   header h1 {
-    font-size: clamp(2.6rem, 5.2vw, 4.6rem);
-    margin: 0 0 24px 0;
-    font-weight: 900;
-    color: var(--shell);
-    -webkit-text-stroke: 3px white;
-    paint-order: stroke fill;
-    text-shadow: 0 5px 0 rgba(31,99,87,0.28), 0 10px 24px rgba(0,0,0,0.15);
-    letter-spacing: -1px;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.8rem, 13vw, 6.5rem);
+    line-height: 0.95;
+    margin: 0 0 18px;
+    letter-spacing: 1px;
+    overflow-wrap: break-word;
   }
+  header h1 span {
+    display: inline-block;
+    -webkit-text-stroke: 4px white;
+    paint-order: stroke fill;
+    text-shadow: 0 7px 0 rgba(0,0,0,0.18), 0 14px 22px rgba(0,0,0,0.28);
+    padding: 0 4px;
+  }
+  header h1 .w1 { color: var(--sun); }
+  header h1 .w2 { color: var(--coral); }
+  header h1 .w3 { color: #FFFFFF; }
 
   header p.subtitle {
     display: inline-block;
-    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    font-family: 'Dongle', 'Baloo 2', sans-serif;
     font-weight: 700;
-    color: var(--shell-dark);
-    background: rgba(255,255,255,0.7);
-    padding: 8px 22px;
+    font-size: clamp(1.5rem, 4.4vw, 1.9rem);
+    color: var(--deep);
+    background: rgba(255,255,255,0.96);
+    border: 3px solid var(--sun);
+    padding: 10px 26px;
     border-radius: 999px;
     margin: 0 0 4px 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    box-shadow: 0 5px 0 rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.15);
   }
 
-  .auth-hint {
+  .site-footer {
     text-align: center;
-    color: #3E534E;
-    font-size: 0.9rem;
-    margin: 0 0 14px 0;
-    white-space: nowrap;
+    margin-top: 8px;
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 0.85rem;
   }
 
   .progress-wrap {
@@ -96,7 +202,7 @@
 
   #progress-label {
     font-weight: 700;
-    color: var(--shell-dark);
+    color: var(--deep);
     white-space: nowrap;
     font-size: 0.95rem;
   }
@@ -113,22 +219,16 @@
     flex-shrink: 0;
     transition: transform 0.06s ease;
   }
-  #reset-btn:hover { background: var(--sand); }
+  #reset-btn:hover { background: var(--sun); }
   #reset-btn:active { transform: translateY(2px) rotate(-30deg); box-shadow: none; }
 
   .auth-box {
     max-width: 600px;
     margin: 0 auto 64px;
-    background: rgba(255,255,255,0.55);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.7);
-    border-radius: 22px;
-    padding: 24px 24px 20px;
-    box-shadow: 0 10px 30px rgba(31,99,87,0.15), 0 2px 8px rgba(0,0,0,0.05);
   }
 
   .auth-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  #auth-logged-out .auth-row { gap: 20px; }
 
   .auth-row input {
     flex: 1;
@@ -140,7 +240,7 @@
     font-size: 0.95rem;
     outline: none;
   }
-  .auth-row input:focus { border-color: var(--shell); }
+  .auth-row input:focus { border-color: var(--leaf); }
 
   .auth-btn {
     border: none;
@@ -153,20 +253,34 @@
     white-space: nowrap;
     transition: transform 0.12s ease, box-shadow 0.12s ease;
     box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
   .auth-btn:hover { transform: translateY(-2px); }
   .auth-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.12); }
-  #open-login-btn { background: var(--shell); color: white; }
-  #open-signup-btn { background: var(--sand); color: var(--shell-dark); }
+  #open-login-btn, #open-signup-btn {
+    font-family: 'Dongle', 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 2.3rem;
+    line-height: 1;
+    gap: 10px;
+    border-radius: 18px;
+    padding: 16px 32px 12px;
+  }
+  #open-login-btn { background: var(--coral); color: white; box-shadow: 0 6px 0 var(--coral-dark), 0 10px 18px rgba(0,0,0,0.25); }
+  #open-signup-btn { background: var(--leaf); color: white; box-shadow: 0 6px 0 var(--leaf-dark), 0 10px 18px rgba(0,0,0,0.25); }
   #auth-logout-btn { background: var(--coral); color: white; }
 
-  #auth-logged-in {
+  .top-right-bar {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 500;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    font-weight: 700;
-    color: var(--shell-dark);
+    gap: 8px;
   }
 
   .auth-btn-wide {
@@ -174,7 +288,7 @@
     margin-top: 12px;
     padding: 12px;
     font-size: 1rem;
-    background: var(--shell);
+    background: var(--leaf);
     color: white;
   }
 
@@ -202,14 +316,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--sand);
+    background: var(--sun);
     padding: 14px 20px;
-    border-bottom: 3px solid var(--shell);
+    border-bottom: 3px solid var(--leaf);
   }
   .auth-modal-header h2 {
     margin: 0;
     font-size: 1.15rem;
-    color: var(--shell-dark);
+    color: var(--deep);
   }
   .auth-modal-close {
     background: var(--coral);
@@ -233,6 +347,42 @@
     min-height: 1.2em;
   }
 
+  #open-letter-btn { background: var(--leaf); color: white; }
+
+  .letter-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px 12px;
+    border: 2px solid #C9DCD5;
+    border-radius: 10px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.95rem;
+    resize: vertical;
+    outline: none;
+  }
+  .letter-textarea:focus { border-color: var(--leaf); }
+
+  .letter-success {
+    display: block;
+    margin-top: 10px;
+    color: var(--deep);
+    font-size: 0.85rem;
+    text-align: center;
+    min-height: 1.2em;
+  }
+
+  .teacher-message-modal .auth-modal-header { background: #E3F9F6; border-bottom-color: var(--leaf); }
+  .teacher-message-modal .auth-modal-header h2 { color: var(--leaf-dark); }
+  .teacher-message-body {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: var(--ink);
+    background: #F5F9FC;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+
   .progress-track {
     flex: 1;
     background: #E3ECE8;
@@ -244,7 +394,7 @@
   #progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--shell), #4FC79B);
+    background: linear-gradient(90deg, var(--leaf-dark), var(--leaf));
     border-radius: 999px;
     transition: width 0.4s ease;
   }
@@ -255,13 +405,13 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: var(--sand);
-    border: 2px solid var(--shell);
+    background: var(--sun);
+    border: 2px solid var(--leaf);
     border-radius: 999px;
     padding: 8px 22px;
     font-weight: 700;
     font-size: 1.15rem;
-    color: var(--shell-dark);
+    color: var(--deep);
     margin-bottom: 16px;
   }
 
@@ -292,18 +442,18 @@
   .chapter-card:hover {
     transform: translateY(-6px) scale(1.04);
     box-shadow: 0 10px 0 rgba(0,0,0,0.08), 0 16px 24px rgba(0,0,0,0.12);
-    border-color: var(--shell);
+    border-color: var(--leaf);
   }
 
   .chapter-card:active { transform: translateY(-2px) scale(1.01); }
 
-  .chapter-card.completed { background: #F2FBF7; }
+  .chapter-card.completed { background: #EAFBF9; }
 
   .chapter-badge {
     position: absolute;
     top: -10px;
     left: -10px;
-    background: var(--shell);
+    background: var(--deep);
     color: white;
     font-weight: 700;
     font-size: 0.85rem;
@@ -313,7 +463,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 3px 0 var(--shell-dark);
+    box-shadow: 0 3px 0 #011D33;
   }
 
   .completed-check {
@@ -329,7 +479,7 @@
     align-items: center;
     justify-content: center;
     font-size: 0.95rem;
-    box-shadow: 0 3px 0 #C85742;
+    box-shadow: 0 3px 0 var(--coral-dark);
   }
 
   .chapter-card.completed .completed-check { display: flex; }
@@ -344,65 +494,55 @@
     word-break: keep-all;
   }
 
-  footer {
-    text-align: center;
-    margin-top: 40px;
-    color: #3E534E;
-    font-size: 0.9rem;
-  }
-
-  .site-footer {
-    text-align: center;
-    margin-top: 8px;
-    color: var(--shell-dark);
-    font-weight: 700;
-    font-size: 0.85rem;
-  }
-
   @media (max-width: 500px) {
-    header h1 { font-size: 1.8rem; }
     .card-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
     .chapter-emoji { font-size: 2rem; }
-    .auth-hint { white-space: normal; font-size: 0.82rem; }
   }
 </style>
 </head>
 <body>
 
+<div class="sunlight"></div>
+<div class="wave-floor"></div>
+
+<span class="mascot-turtle" style="bottom:7%; left:6%;">🐢</span>
+<span class="mascot-fish fish-1" style="top:8%; right:8%;">🐠</span>
+<span class="mascot-fish fish-2" style="bottom:6%; right:5%;">🐟</span>
+<span class="mascot-fish fish-3" style="top:48%; left:4%;">🐡</span>
+<span class="star-deco" style="top:16%; left:12%;">✨</span>
+<span class="star-deco" style="top:38%; right:10%; animation-delay:0.6s;">⭐</span>
+<span class="star-deco" style="bottom:16%; left:22%; animation-delay:1.1s;">🌟</span>
+
+<div id="auth-logged-in" class="top-right-bar" style="display:none;">
+  <button id="open-letter-btn" class="auth-btn">✉️ 메시지 보내기</button>
+  <button id="auth-logout-btn" class="auth-btn">로그아웃</button>
+</div>
+
 <div class="wrap">
-  <header>
-    <h1><span class="turtle-icon">🐢</span> 거북이 코딩 놀이터</h1>
-    <p class="subtitle">🐍 파이썬 터틀로 배우는 19가지 코딩 모험</p>
+  <header id="landing-header">
+    <h1>
+      <span class="w1">TURTLE</span><br>
+      <span class="w2">CODING</span><br>
+      <span class="w3">PLAYGROUND</span>
+    </h1>
+    <p class="subtitle">🐍 터틀그래픽으로 배우는 19가지 파이썬</p>
   </header>
 
   <div class="auth-box">
     <div id="auth-logged-out">
-      <p class="auth-hint">로그인하면 어떤 컴퓨터에서든 내 진행 기록을 이어갈 수 있어요!</p>
       <div class="auth-row">
-        <button id="open-login-btn" class="auth-btn">🔑 로그인</button>
-        <button id="open-signup-btn" class="auth-btn">✏️ 회원가입</button>
+        <button id="open-login-btn" class="auth-btn">로그인</button>
+        <button id="open-signup-btn" class="auth-btn">회원가입</button>
       </div>
-    </div>
-    <div id="auth-logged-in" style="display:none;">
-      <span>👋 <span id="auth-username-display"></span>님, 환영해요!</span>
-      <button id="auth-logout-btn" class="auth-btn">로그아웃</button>
     </div>
   </div>
 
-  <p class="site-footer">
-    제작: 김정이 선생님 ❤️ &nbsp;|&nbsp; © 2026 Coding Playground
+  <p id="landing-footer" class="site-footer">
+    제작: 김정이 선생님 🤍 &nbsp;|&nbsp; © 2026 Coding Playground
   </p>
 
   <div id="app-content" style="display:none;">
-    <div class="progress-wrap">
-      <span id="progress-label">0 / 19 완료</span>
-      <div class="progress-track"><div id="progress-bar"></div></div>
-      <button id="reset-btn" title="진행 기록 초기화">🔄</button>
-    </div>
-
     <div id="categories"></div>
-
-    <footer>거북이와 함께 한 걸음씩, 오늘도 즐겁게 코딩해요! 🐢💻</footer>
   </div>
 </div>
 
@@ -444,12 +584,81 @@
   </div>
 </div>
 
+<div id="letter-modal" class="auth-modal-overlay">
+  <div class="auth-modal-content">
+    <div class="auth-modal-header">
+      <h2>✉️ 선생님께 메시지 보내기</h2>
+      <button class="auth-modal-close" data-close="letter-modal">✖</button>
+    </div>
+    <div class="auth-modal-body">
+      <textarea id="letter-text" class="letter-textarea" placeholder="선생님께 하고 싶은 말을 적어주세요!"></textarea>
+      <button id="letter-submit-btn" class="auth-btn auth-btn-wide">보내기</button>
+      <span id="letter-status" class="letter-success"></span>
+    </div>
+  </div>
+</div>
+
+<div id="teacher-message-modal" class="auth-modal-overlay teacher-message-modal">
+  <div class="auth-modal-content">
+    <div class="auth-modal-header">
+      <h2>💌 선생님이 보낸 메시지</h2>
+      <button class="auth-modal-close" data-close="teacher-message-modal">✖</button>
+    </div>
+    <div class="auth-modal-body">
+      <div id="teacher-message-body" class="teacher-message-body"></div>
+      <button id="teacher-message-ack-btn" class="auth-btn auth-btn-wide">확인했어요!</button>
+    </div>
+  </div>
+</div>
+
+<div id="welcome-modal" class="auth-modal-overlay">
+  <div class="auth-modal-content">
+    <div class="auth-modal-header">
+      <h2>👋 <span id="welcome-username-display"></span>님, 환영해요!</h2>
+      <button class="auth-modal-close" data-close="welcome-modal">✖</button>
+    </div>
+    <div class="auth-modal-body">
+      <div class="progress-wrap" style="margin: 0 0 20px;">
+        <span id="progress-label">0 / 19 완료</span>
+        <div class="progress-track"><div id="progress-bar"></div></div>
+        <button id="reset-btn" title="진행 기록 초기화">🔄</button>
+      </div>
+      <button id="start-learning-btn" class="auth-btn auth-btn-wide">🚀 학습하기</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 
 <script>
+  // 거품 여러 개를 랜덤 위치/크기/속도로 생성
+  const bubbleCount = 22;
+  for (let i = 0; i < bubbleCount; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 8 + Math.random() * 26;
+    b.style.width = size + 'px';
+    b.style.height = size + 'px';
+    b.style.left = Math.random() * 100 + 'vw';
+    b.style.animationDuration = (6 + Math.random() * 8) + 's';
+    b.style.animationDelay = (Math.random() * 10) + 's';
+    document.body.appendChild(b);
+  }
+
+  // 화면 하단에 해초 몇 개 배치
+  const seaweedSpots = [4, 14, 88, 95];
+  seaweedSpots.forEach((leftPct, i) => {
+    const s = document.createElement('div');
+    s.className = 'seaweed';
+    s.style.left = leftPct + '%';
+    s.style.animationDelay = (i * 0.4) + 's';
+    s.style.height = (60 + Math.random() * 50) + 'px';
+    document.body.appendChild(s);
+  });
+
   const chapters = [
     { num: 1, file: 'chapter1_shapes.html', emoji: '🔺', title: '도형 그리기' },
     { num: 2, file: 'chapter2_coloring.html', emoji: '🎨', title: '색칠하기' },
@@ -558,9 +767,16 @@
     document.getElementById(id).classList.add('open');
   }
 
+  const MODAL_STATUS_EL = {
+    'signup-modal': 'signup-error',
+    'login-modal': 'login-error',
+    'letter-modal': 'letter-status',
+  };
+
   function closeModal(id) {
     document.getElementById(id).classList.remove('open');
-    clearErrorIn(id === 'signup-modal' ? 'signup-error' : 'login-error');
+    const statusElId = MODAL_STATUS_EL[id];
+    if (statusElId) clearErrorIn(statusElId);
   }
 
   document.getElementById('open-login-btn').addEventListener('click', () => openModal('login-modal'));
@@ -614,6 +830,37 @@
     logOutStudent();
   });
 
+  // ---------- 선생님께 편지쓰기 ----------
+
+  document.getElementById('open-letter-btn').addEventListener('click', () => openModal('letter-modal'));
+
+  document.getElementById('letter-submit-btn').addEventListener('click', async () => {
+    const text = document.getElementById('letter-text').value;
+    if (!text.trim()) {
+      document.getElementById('letter-status').textContent = '편지 내용을 적어주세요!';
+      return;
+    }
+    try {
+      await sendLetterToTeacher(text);
+      document.getElementById('letter-text').value = '';
+      document.getElementById('letter-status').textContent = '💌 선생님께 편지를 보냈어요!';
+    } catch (e) {
+      document.getElementById('letter-status').textContent = '전송 중 문제가 생겼어요. 다시 시도해주세요.';
+    }
+  });
+
+  // ---------- 선생님이 보낸 메시지 확인 ----------
+
+  document.getElementById('teacher-message-ack-btn').addEventListener('click', async () => {
+    closeModal('teacher-message-modal');
+    try { await markTeacherMessageRead(); } catch (e) {}
+    openModal('welcome-modal');
+  });
+
+  // ---------- 환영 + 진도 모달 ----------
+
+  document.getElementById('start-learning-btn').addEventListener('click', () => closeModal('welcome-modal'));
+
   function clearAuthInputs() {
     ['signup-school', 'signup-grade', 'signup-username', 'signup-password', 'login-username', 'login-password']
       .forEach(id => { document.getElementById(id).value = ''; });
@@ -624,22 +871,36 @@
       cloudProgress = await getStudentProgress();
       const cloudName = await getStudentName();
       const name = cloudName || lastTypedUsername || '학생';
-      document.getElementById('auth-username-display').textContent = name;
+      document.getElementById('welcome-username-display').textContent = name;
       // Firestore에 이름이 비어있었다면(예전 계정 등) 지금 입력한 이름으로 채워줘요.
       if (!cloudName && lastTypedUsername) {
         db.collection('students').doc(user.uid).set({ username: lastTypedUsername }, { merge: true }).catch(() => {});
       }
-      document.getElementById('auth-logged-out').style.display = 'none';
+      document.getElementById('landing-header').style.display = 'none';
+      document.querySelector('.auth-box').style.display = 'none';
+      document.getElementById('landing-footer').style.display = 'none';
       document.getElementById('auth-logged-in').style.display = 'flex';
       document.getElementById('app-content').style.display = 'block';
       closeModal('signup-modal');
       closeModal('login-modal');
       clearAuthInputs();
+
+      const unreadMsg = await getUnreadTeacherMessage().catch(() => null);
+      if (unreadMsg) {
+        document.getElementById('teacher-message-body').textContent = unreadMsg.text;
+        openModal('teacher-message-modal');
+      } else {
+        openModal('welcome-modal');
+      }
     } else {
       cloudProgress = {};
-      document.getElementById('auth-logged-out').style.display = 'block';
+      document.getElementById('landing-header').style.display = 'block';
+      document.querySelector('.auth-box').style.display = 'block';
+      document.getElementById('landing-footer').style.display = 'block';
       document.getElementById('auth-logged-in').style.display = 'none';
       document.getElementById('app-content').style.display = 'none';
+      closeModal('welcome-modal');
+      closeModal('teacher-message-modal');
     }
     render();
   });
