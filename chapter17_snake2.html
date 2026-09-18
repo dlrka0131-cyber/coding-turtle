@@ -488,10 +488,16 @@ if snakes[0].distance(food) < 20:
 `
   ];
 
+  const studentCode = new Array(challenges.length).fill(null);
+  let currentTab = null;
+
   function changeTab(index) {
+    if (currentTab !== null) studentCode[currentTab] = codeArea.value;
+    currentTab = index;
+
     tabBtns.forEach(btn => btn.classList.remove('active'));
     tabBtns[index].classList.add('active');
-    codeArea.value = challenges[index];
+    codeArea.value = studentCode[index] !== null ? studentCode[index] : challenges[index];
     updateHighlight();
   }
 
