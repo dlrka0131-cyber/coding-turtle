@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>17차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const STAR_BODY = (len) => [
+  { given: 'for i in range(5):', note: '5번 해 줘!' },
+  { box: [{ given: `t.forward(${len})`, note: `앞으로 ${len}` }, { given: 't.left(144)', note: '별 각도로 돌기' }] },
+];
+const STAR_DEF = (param) => [
+  { given: `def star(${param}):`, note: '"star" 명령 만들기' },
+  { box: STAR_BODY('size'), label: '📦 star 명령 상자 안' },
+];
+const START = { given: 't.penup(); t.goto(-170, -30); t.pendown()', note: '왼쪽에서 시작 (신경 쓰지 마세요)' };
+const JUMP = [
+  { given: 't.penup()', note: '펜 들기' },
+  { given: 't.forward(120)', note: '옆으로 점프' },
+  { given: 't.pendown()', note: '펜 내리기' },
+];
+const LESSON = {
+  num: 17,
+  topic: '재료를 넣는 명령',
+  words: [
+    { emo: '⭐', en: 'star', say: '스타', ko: '별' },
+    { emo: '📦', en: 'def', say: '데프', ko: '새 명령 만들기' },
+    { emo: '🥣', en: '(size)', say: '사이즈', ko: '재료 칸 (크기)' },
+    { emo: '▶️', en: 'star(50)', say: '', ko: '재료 50 넣고 실행' },
+    { emo: '🔁', en: 'range(5)', say: '레인지', ko: '5번 반복' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\nt.color("gold")\ndef star(size):\n    for i in range(5):\n        t.forward(size)\n        t.left(144)\nt.penup()\nt.goto(-170, -30)\nt.pendown()\nstar(40)\nt.penup()\nt.forward(70)\nt.pendown()\nstar(70)\nt.penup()\nt.forward(100)\nt.pendown()\nstar(100)\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `<b>작은 별, 중간 별, 큰 별</b> ⭐ 을 한 명령으로 그려요!<br>4차시에서 만든 <b>"나만의 명령"</b> 에 <b>재료</b>를 넣을 수 있게 만들 거예요.`,
+      words: true,
+      done: '크기가 다른 별 3개! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '별 명령 불러 보기 ⭐',
+      talk: `4차시에 배운 <b>def</b> 로 <b>star</b> 명령을 만들어 뒀어요. 별을 그리는 방법이 노란 상자 안에 있어요.<br>맨 아래에 <b>star()</b> 를 써서 불러 보세요!`,
+      lines: [
+        { prep: true }, { given: 't.color("gold")', note: '금색 펜' },
+        { given: 'def star():', note: '"star" 명령 만들기' },
+        { box: STAR_BODY('100'), label: '📦 star 명령 상자 안' },
+        { type: 'star()', note: '별 그리기 실행!' },
+      ],
+      done: '별이 나왔어요! ⭐ 그런데… <b>항상 크기가 100</b> 으로만 나와요. 😕 크기를 바꾸고 싶으면 상자 안을 고쳐야 해요.',
+    },
+    {
+      title: '재료 넣기 🥣',
+      talk: `상자 안을 고치는 대신, <b>부를 때마다 크기를 알려 주면</b> 어떨까요?<br><b>def star(size):</b> 의 <b>(size)</b> 는 <b>"재료 칸"</b> 이에요. 안쪽에서는 <b>forward(size)</b> 로 그 재료를 써요.<br>이제 부를 때 <b>star(50)</b> 처럼 재료를 넣어 줘요!`,
+      chips: [['def star', '새 명령 star'], ['(size)', '재료 칸 (크기)'], ['star(50)', '재료 50 넣어서 실행']],
+      sentence: '🗣️ "star 명령 실행! 크기 재료는 50!"',
+      lines: [
+        { prep: true }, { given: 't.color("gold")', note: '금색 펜' },
+        ...STAR_DEF('size'),
+        { type: 'star(50)', note: '재료 50 넣고 실행!' },
+      ],
+      done: '크기 50 짜리 작은 별이에요! ⭐ 재료로 크기를 정했어요.',
+    },
+    {
+      title: '재료 바꿔 보기 🔢',
+      talk: `상자 안은 그대로 두고, 부를 때 <b>재료 숫자만</b> 바꿔 보세요.<br>버튼을 눌러도 돼요!`,
+      lines: [
+        { prep: true }, { given: 't.color("gold")', note: '금색 펜' },
+        ...STAR_DEF('size'),
+        { blank: 'star(@)', answers: [null], start: ['70'], note: '재료 숫자' },
+      ],
+      quick: ['30', '70', '120'],
+      done: '숫자만 바꿨는데 별 크기가 바뀌었어요! 🌟 이게 <b>재료</b>의 힘이에요.',
+    },
+    {
+      title: '도전! 재료 이름 짓기 🏷️',
+      talk: `재료 칸의 이름은 <b>안쪽에서 쓰는 이름과 똑같아야</b> 해요.<br>상자 안에서 <b>forward(size)</b> 라고 썼으니, 재료 칸 이름은 무엇일까요? 빈칸에 써 보세요.`,
+      lines: [
+        { prep: true }, { given: 't.color("gold")', note: '금색 펜' },
+        { blank: 'def star(@):', answers: ['size'], note: '재료 칸 이름은?' },
+        { box: STAR_BODY('size'), label: '📦 star 명령 상자 안' },
+        { given: 'star(60)', note: '재료 60 넣고 실행' },
+      ],
+      hint: '안쪽에 <b>forward(size)</b> 라고 써 있죠? 같은 이름 <b>size</b> 를 써요!',
+      done: '재료 이름이 맞아서 별이 그려졌어요! 🏷️',
+    },
+    {
+      title: '도전! 별 3개 찍기 ⭐⭐⭐',
+      talk: `재료를 <b>다르게</b> 넣어서 크기가 다른 별 3개를 그려요.<br>빈칸 3개에 마음대로 크기 숫자를 넣어 보세요!`,
+      lines: [
+        { prep: true }, { given: 't.color("gold")', note: '금색 펜' },
+        ...STAR_DEF('size'),
+        START,
+        { blank: 'star(@)', answers: [null], start: ['40'], note: '첫째 별 크기' },
+        ...JUMP,
+        { blank: 'star(@)', answers: [null], start: ['70'], note: '둘째 별 크기' },
+        ...JUMP,
+        { blank: 'star(@)', answers: [null], start: ['100'], note: '셋째 별 크기' },
+      ],
+      done: '크기가 다른 별 3개! 🌟 하나의 명령으로 여러 별을 그렸어요.',
+    },
+    {
+      kind: 'free', title: '나만의 별밭 🎨',
+      talk: `재료 숫자와 색깔, 별 개수를 마음대로 바꿔 보세요!<br><span class="small">별 줄을 더 쓰거나, 별마다 color 를 바꿔 봐요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\n\ndef star(size):\n    for i in range(5):\n        t.forward(size)\n        t.left(144)\n\nt.penup()\nt.goto(-170, -30)\nt.pendown()\nt.color("gold")\nstar(40)\nt.penup()\nt.forward(70)\nt.pendown()\nt.color("orange")\nstar(70)\nt.penup()\nt.forward(100)\nt.pendown()\nt.color("red")\nstar(100)\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

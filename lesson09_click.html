@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const MAGIC = [
+  { given: 'def magic(x, y):', note: '"magic" 명령 (x, y는 클릭한 자리)' },
+  { box: [{ given: 't.goto(x, y)', note: '클릭한 자리로 가!' }, { given: 't.stamp()', note: '도장 쾅!' }], label: '📦 magic 명령 상자 안' },
+];
+const LESSON = {
+  num: 9,
+  topic: '마우스 마법 지팡이',
+  words: [
+    { emo: '🖱️', en: 'onscreenclick', say: '온 스크린 클릭', ko: '화면을 클릭하면' },
+    { emo: '📍', en: 'goto', say: '고투', ko: '그 자리로 가' },
+    { emo: '🐾', en: 'stamp', say: '스탬프', ko: '도장 찍기' },
+    { emo: '📦', en: 'def', say: '데프', ko: '새 명령 만들기' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.penup()\ndef magic(x, y):\n    t.goto(x, y)\n    t.stamp()\nturtle.onscreenclick(magic)\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `마우스로 <b>클릭하는 곳</b>에 거북이가 점프해서 도장을 찍는 <b>마법 지팡이</b>예요! 🪄<br><span class="small">▶ 미리보기를 누르고 <b>오른쪽 무대를 여기저기 클릭</b>해 보세요.</span>`,
+      words: true,
+      done: '클릭하는 곳마다 도장이 찍혀요! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '클릭하면 거기로 가! 🖱️',
+      talk: `<b>onscreenclick</b> 은 <b>"화면을 클릭하면 ~해!"</b> 예요.<br><b>t.goto</b> 를 연결하면 클릭한 곳으로 거북이가 가요.<br><span class="small">💡 goto 뒤에는 <b>괄호 ( ) 를 안 써요!</b> 이름만 알려 주는 거예요.</span>`,
+      chips: [['turtle.onscreenclick', '화면을 클릭하면'], ['(t.goto)', '거북이가 그곳으로 가']],
+      sentence: '🗣️ "화면을 클릭하면, 거북이가 그곳으로 가!"',
+      lines: [{ prep: true }, { given: 't.penup()', note: '펜 들기' }, { type: 'turtle.onscreenclick(t.goto)', note: '클릭하면 거기로!' }],
+      done: '실행한 다음, <b>오른쪽 무대를 클릭</b>해 보세요! 🖱️ 클릭한 곳으로 거북이가 가요.',
+    },
+    {
+      title: '도장 마법 만들기 🪄',
+      talk: `클릭하면 <b>이동 + 도장</b>을 둘 다 하고 싶어요. 그래서 새 명령 <b>magic</b> 을 만들었어요.<br><b>(x, y)</b> 는 <b>클릭한 자리</b>가 자동으로 들어오는 칸이에요. 맨 아래 줄을 따라 써 보세요!`,
+      chips: [['magic(x, y)', 'x, y = 클릭한 자리'], ['onscreenclick(magic)', '클릭하면 magic 해!']],
+      lines: [{ prep: true }, { given: 't.penup()', note: '펜 들기' }, ...MAGIC, { type: 'turtle.onscreenclick(magic)', note: '클릭하면 magic!' }],
+      done: '무대를 여기저기 <b>클릭</b>해 보세요! 🪄 도장이 쾅쾅 찍혀요.<br><span class="small">(magic 뒤에도 괄호를 안 써요!)</span>',
+    },
+    {
+      title: '도전! 도장 마법 완성하기 🐾',
+      talk: `빈칸에 <b>stamp</b> 를 넣어 도장을 완성하세요.<br>그리고 색깔도 바꿔 볼까요? <b>t.color</b> 줄의 색깔을 바꿔 봐요!`,
+      lines: [
+        { prep: true }, { given: 't.penup()', note: '펜 들기' },
+        { blank: 't.color("@")', answers: ['*'], start: ['red'], note: '무슨 색?' },
+        { given: 'def magic(x, y):', note: '"magic" 명령' },
+        { box: [{ given: 't.goto(x, y)', note: '클릭한 자리로 가!' }, { blank: 't.@()', answers: ['stamp'], note: '도장 쾅!' }], label: '📦 magic 명령 상자 안' },
+        { given: 'turtle.onscreenclick(magic)', note: '클릭하면 magic!' },
+      ],
+      hint: '두 번째 빈칸은 <b>stamp</b> (스탬프 = 도장)예요.',
+      done: '내가 고른 색 도장이 찍혀요! 🎨 무대를 클릭해 보세요.',
+    },
+    {
+      kind: 'free', title: '나만의 마법 지팡이 🎨',
+      talk: `색깔과 도장 모양을 마음대로 바꿔 보세요!<br><span class="small">shape 에는 "turtle", "circle", "square", "triangle", "arrow" 를 쓸 수 있어요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("circle")\nt.color("purple")\nt.penup()\n\ndef magic(x, y):\n    t.goto(x, y)\n    t.stamp()\n\nturtle.onscreenclick(magic)\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

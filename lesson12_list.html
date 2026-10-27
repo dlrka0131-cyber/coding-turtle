@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const START = { given: 't.penup(); t.goto(-250, 0); t.pendown()', note: '왼쪽 끝으로 (신경 쓰지 마세요)' };
+const CAR = (colorLine) => [
+  colorLine,
+  { given: 't.begin_fill()', note: '색칠 시작' },
+  { given: 't.circle(30)', note: '동그라미' },
+  { given: 't.end_fill()', note: '색칠 끝' },
+  { given: 't.penup()', note: '펜 들기' },
+  { given: 't.forward(80)', note: '옆 칸으로 점프' },
+  { given: 't.pendown()', note: '펜 내리기' },
+];
+const LESSON = {
+  num: 12,
+  topic: '색깔 기차',
+  words: [
+    { emo: '🚂', en: 'colors', say: '컬러스', ko: '색깔 기차 (이름)' },
+    { emo: '[ ]', en: '[ ... ]', say: '대괄호', ko: '칸 여러 개를 묶기' },
+    { emo: '1️⃣', en: 'colors[0]', say: '컬러스 영', ko: '0번 칸 꺼내기' },
+    { emo: '🔢', en: 'i', say: '아이', ko: '번호표 (0,1,2…)' },
+    { emo: '🎨', en: 'color', say: '컬러', ko: '색깔' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\nt.penup()\nt.goto(-250, 0)\nt.pendown()\ncolors = ["red", "orange", "gold", "green", "blue", "purple"]\nfor i in range(6):\n    t.color(colors[i])\n    t.begin_fill()\n    t.circle(28)\n    t.end_fill()\n    t.penup()\n    t.forward(80)\n    t.pendown()\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `색깔이 줄줄이 이어진 <b>무지개 기차</b> 🚂🌈 를 만들어요!<br>비밀은 색깔 이름을 <b>한 줄로 묶어 두는 것</b>이에요.`,
+      words: true,
+      done: '칸마다 색깔이 달라요! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '색깔 기차 만들기 🚂',
+      talk: `색깔 이름 여러 개를 <b>대괄호 [ ]</b> 안에 쉼표로 이어서 <b>기차</b>처럼 묶을 수 있어요.<br>이 기차를 <b>리스트</b>라고 불러요. (이름만 알아 두세요!)`,
+      chips: [['colors', '기차 이름'], ['=', '넣어!'], ['["red", "green", "blue"]', '색깔 칸 3개']],
+      sentence: '🗣️ "colors 기차에 red, green, blue 칸을 넣어!"',
+      lines: [{ prep: true }, { type: 'colors = ["red", "green", "blue"]', note: '색깔 기차 만들기' }, { given: 'print(colors)', note: '기차 보여 주기' }],
+      done: '오른쪽 아래 <b>💬 거북이가 한 말</b> 칸을 보세요! 칸 3개가 들어 있어요 🚂',
+    },
+    {
+      title: '0번 칸 꺼내기 1️⃣',
+      talk: `기차에서 <b>칸 하나</b>를 꺼내려면 <b>colors[번호]</b> 라고 써요.<br>⚠️ 칸 번호는 <b>1이 아니라 0부터</b> 시작해요! 첫째 칸 = <b>0번</b>`,
+      chips: [['colors[0]', '기차의 0번 칸 (red)'], ['t.color(...)', '펜 색깔 바꿔']],
+      sentence: '🗣️ "펜 색깔을 colors 기차의 0번 칸 색으로 바꿔!"',
+      lines: [
+        { prep: true },
+        { given: 'colors = ["red", "green", "blue"]', note: '색깔 기차' },
+        { type: 't.color(colors[0])', note: '0번 칸 색 (red)' },
+        { given: 't.begin_fill()', note: '색칠 시작' }, { given: 't.circle(60)', note: '동그라미' }, { given: 't.end_fill()', note: '색칠 끝' },
+      ],
+      done: '빨간 동그라미! 🔴 0번 칸이 red 였어요.',
+    },
+    {
+      title: '번호 바꿔 보기 🔢',
+      talk: `대괄호 안의 <b>번호</b>를 바꿔 보세요. <b>0 → red, 1 → green, 2 → blue</b><br>버튼을 눌러도 돼요!`,
+      lines: [
+        { prep: true },
+        { given: 'colors = ["red", "green", "blue"]', note: '색깔 기차' },
+        { blank: 't.color(colors[@])', answers: [null], start: ['1'], note: '몇 번 칸?' },
+        { given: 't.begin_fill()', note: '색칠 시작' }, { given: 't.circle(60)', note: '동그라미' }, { given: 't.end_fill()', note: '색칠 끝' },
+      ],
+      quick: ['0', '1', '2'],
+      done: '번호만 바꿨는데 색깔이 바뀌었어요! 🌈 (3을 쓰면 어떻게 될까요? 해 보세요!)',
+    },
+    {
+      title: '도전! 번호표 i 쓰기 🎫',
+      talk: `칸을 하나씩 모두 꺼내려면 <b>반복</b>을 써요. 반복할 때마다 <b>i</b> 가 <b>0, 1, 2</b> 로 바뀌어요. 번호표 같은 거예요!<br>빈칸에 숫자 대신 번호표 <b>i</b> 를 써 보세요.`,
+      chips: [['i', '0 → 1 → 2 로 바뀌는 번호표']],
+      lines: [
+        { prep: true }, START,
+        { given: 'colors = ["red", "green", "blue"]', note: '색깔 기차' },
+        { given: 'for i in range(3):', note: '3번 해 줘!' },
+        { box: CAR({ blank: 't.color(colors[@])', answers: ['i'], note: 'i번 칸 색' }) },
+      ],
+      hint: '빈칸에 영어 소문자 <b>i</b> 를 써요. 반복할 때마다 0, 1, 2 로 바뀌어서 칸이 하나씩 나와요!',
+      done: '빨강, 초록, 파랑 기차 완성! 🚂 반복하면서 번호표 i 로 칸을 하나씩 꺼냈어요.',
+    },
+    {
+      title: '도전! 6칸 무지개 기차 🌈',
+      talk: `색깔이 <b>6칸</b>이 됐어요. 기차 6칸을 모두 그리려면 <b>몇 번</b> 반복해야 할까요?`,
+      lines: [
+        { prep: true }, START,
+        { given: 'colors = ["red", "orange", "gold", "green", "blue", "purple"]', note: '색깔 기차 (6칸)' },
+        { blank: 'for i in range(@):', answers: ['6'], note: '몇 번 해 줘?' },
+        { box: CAR({ given: 't.color(colors[i])', note: 'i번 칸 색' }) },
+      ],
+      hint: '칸이 6개니까 <b>6</b>번 반복해요. (번호표는 0,1,2,3,4,5)',
+      done: '무지개 기차 완성! 🌈🚂 칸이 6개라서 6번 반복했어요.',
+    },
+    {
+      kind: 'free', title: '나만의 기차 🎨',
+      talk: `색깔 이름을 바꾸거나 <b>칸을 더 늘려</b> 보세요! 칸을 늘리면 <b>range( ) 숫자</b>도 같이 늘려야 해요.<br><span class="small">⚠️ 칸 수보다 많이 반복하면 "칸이 없어요!" 에러가 나요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\nt.penup()\nt.goto(-250, 0)\nt.pendown()\n\ncolors = ["pink", "gold", "green", "blue", "purple"]\nfor i in range(5):\n    t.color(colors[i])\n    t.begin_fill()\n    t.circle(30)\n    t.end_fill()\n    t.penup()\n    t.forward(90)\n    t.pendown()\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

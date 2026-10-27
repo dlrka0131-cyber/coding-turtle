@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const GO_UP = [
+  { given: 'def go_up():', note: '"go_up" 명령 만들기' },
+  { box: [{ given: 't.setheading(90)', note: '위쪽을 봐!' }, { given: 't.forward(50)', note: '앞으로 50' }], label: '📦 go_up 명령 상자 안' },
+];
+const LESSON = {
+  num: 6,
+  topic: '키보드로 조종하기',
+  words: [
+    { emo: '🧭', en: 'setheading', say: '셋 헤딩', ko: '이 방향을 봐' },
+    { emo: '⌨️', en: 'onkey', say: '온 키', ko: '키를 누르면 ~해' },
+    { emo: '👂', en: 'listen', say: '리슨', ko: '귀 열어! (듣기)' },
+    { emo: '⬆️', en: '"Up"', say: '업', ko: '위쪽 화살표 키' },
+    { emo: '⬇️', en: '"Down"', say: '다운', ko: '아래쪽 화살표 키' },
+    { emo: '📦', en: 'def', say: '데프', ko: '새 명령 만들기' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\ndef go_up():\n    t.setheading(90)\n    t.forward(50)\ndef go_down():\n    t.setheading(270)\n    t.forward(50)\ndef go_left():\n    t.setheading(180)\n    t.forward(50)\ndef go_right():\n    t.setheading(0)\n    t.forward(50)\nturtle.onkey(go_up, "Up")\nturtle.onkey(go_down, "Down")\nturtle.onkey(go_left, "Left")\nturtle.onkey(go_right, "Right")\nturtle.listen()\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `오늘은 거북이를 <b>키보드 화살표</b>로 움직여요! 🎮<br><span class="small">▶ 미리보기를 누른 다음, 키보드의 <b>↑ ↓ ← →</b> 를 눌러 보세요.</span>`,
+      words: true,
+      done: '키를 누르는 대로 거북이가 움직여요! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '위로 가는 명령 ⬆️',
+      talk: `먼저 <b>위로 가는 명령</b>이에요. 4차시에 배운 <b>def</b> 로 만들었어요.<br>맨 아래에 <b>go_up()</b> 을 써서 불러 보세요!`,
+      chips: [['setheading(90)', '위쪽을 봐'], ['forward(50)', '앞으로 50']],
+      lines: [{ prep: true }, ...GO_UP, { type: 'go_up()', note: '위로 가는 명령 실행!' }],
+      done: '거북이가 위쪽을 보고 걸어갔어요! ⬆️',
+    },
+    {
+      title: '방향 숫자 알아보기 🧭',
+      talk: `<b>setheading</b> 의 숫자는 <b>어느 쪽을 볼지</b> 정해요.<br><b>0</b>=오른쪽 →, <b>90</b>=위 ↑, <b>180</b>=왼쪽 ←, <b>270</b>=아래 ↓<br>빈칸에 숫자를 넣고 실행해 보세요!`,
+      lines: [
+        { prep: true },
+        { given: 'def go():', note: '"go" 명령 만들기' },
+        { box: [{ blank: 't.setheading(@)', answers: [null], start: ['180'], note: '볼 방향' }, { given: 't.forward(80)', note: '앞으로 80' }], label: '📦 go 명령 상자 안' },
+        { given: 'go()', note: '명령 실행!' },
+      ],
+      quick: ['0', '90', '180', '270'],
+      done: '숫자에 따라 거북이가 가는 쪽이 바뀌었죠? 🧭',
+    },
+    {
+      title: '키와 명령 연결하기 🔗',
+      talk: `이제 <b>"위쪽 화살표 키를 누르면 go_up 해!"</b> 라고 연결해요.<br>실행한 다음 키보드 <b>↑</b> 를 눌러 보세요!`,
+      chips: [['turtle.onkey', '키를 누르면'], ['(go_up, "Up")', 'go_up 해, 위쪽 키로']],
+      sentence: '🗣️ "위쪽 화살표 키를 누르면 go_up 해!"',
+      lines: [{ prep: true }, ...GO_UP, { type: 'turtle.onkey(go_up, "Up")', note: '↑ 키를 누르면 go_up!' }, { given: 'turtle.listen()', note: '귀 열기' }],
+      done: '키보드 <b>↑</b> 를 눌러 보세요! 누를 때마다 거북이가 위로 가요 ⬆️<br><span class="small">(안 움직이면 거북이 무대를 한 번 클릭하고 눌러 보세요)</span>',
+    },
+    {
+      title: '귀 열기 👂',
+      talk: `거북이는 <b>귀를 열어야</b> 키보드 소리를 들어요!<br>빈칸에 <b>listen</b> (듣기)을 써 보세요. 이 줄은 맨 마지막에 한 번만 써요.`,
+      lines: [
+        { prep: true }, ...GO_UP,
+        { given: 'turtle.onkey(go_up, "Up")', note: '↑ 키를 누르면 go_up!' },
+        { blank: 'turtle.@()', answers: ['listen'], note: '귀 열기!' },
+      ],
+      hint: '빈칸에 <b>listen</b> (리슨 = 듣기)을 써요.',
+      done: '귀를 열었어요! 👂 <b>↑</b> 키를 눌러 보세요.',
+    },
+    {
+      title: '도전! 아래로 가는 명령 ⬇️',
+      talk: `이번엔 <b>아래</b>로 가요. 위 명령을 보고 빈칸 2개를 채워 보세요.<br>아래쪽은 방향 숫자 <b>270</b>, 키 이름은 <b>"Down"</b> 이에요.`,
+      lines: [
+        { prep: true }, ...GO_UP,
+        { given: 'def go_down():', note: '"go_down" 명령 만들기' },
+        { box: [{ blank: 't.setheading(@)', answers: ['270'], note: '아래쪽을 봐!' }, { given: 't.forward(50)', note: '앞으로 50' }], label: '📦 go_down 명령 상자 안' },
+        { given: 'turtle.onkey(go_up, "Up")', note: '↑ 키 → go_up' },
+        { blank: 'turtle.onkey(go_down, "@")', answers: ['Down'], note: '↓ 키 → go_down' },
+        { given: 'turtle.listen()', note: '귀 열기' },
+      ],
+      hint: '첫 빈칸은 <b>270</b>, 두 번째 빈칸은 <b>Down</b> (맨 앞 D 는 큰 글자!)이에요.',
+      done: '↑ ↓ 둘 다 움직여요! 🎉 키보드로 눌러 보세요.',
+    },
+    {
+      kind: 'free', colors: false, title: '네 방향 조종하기 🎮',
+      talk: `←(왼쪽)과 →(오른쪽)도 연결되어 있어요. 거북이를 마음대로 움직여 보세요!<br><span class="small">forward(50) 의 숫자를 바꾸면 한 번에 가는 거리가 달라져요. 키 이름은 "Left", "Right" 예요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.color("green")\n\ndef go_up():\n    t.setheading(90)\n    t.forward(50)\ndef go_down():\n    t.setheading(270)\n    t.forward(50)\ndef go_left():\n    t.setheading(180)\n    t.forward(50)\ndef go_right():\n    t.setheading(0)\n    t.forward(50)\n\nturtle.onkey(go_up, "Up")\nturtle.onkey(go_down, "Down")\nturtle.onkey(go_left, "Left")\nturtle.onkey(go_right, "Right")\nturtle.listen()\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

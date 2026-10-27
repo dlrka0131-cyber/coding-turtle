@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>13차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const START = { given: 't.penup(); t.goto(-250, 0); t.pendown()', note: '왼쪽 끝으로 (신경 쓰지 마세요)' };
+const CAR = (colorLine) => [
+  colorLine,
+  { given: 't.begin_fill()', note: '색칠 시작' },
+  { given: 't.circle(20)', note: '동그라미' },
+  { given: 't.end_fill()', note: '색칠 끝' },
+  { given: 't.penup()', note: '펜 들기' },
+  { given: 't.forward(55)', note: '옆으로 점프' },
+  { given: 't.pendown()', note: '펜 내리기' },
+];
+const LESSON = {
+  num: 13,
+  topic: '돌고 도는 색깔',
+  words: [
+    { emo: '➗', en: '%', say: '퍼센트(나머지)', ko: '나눈 나머지' },
+    { emo: '🔢', en: '7 % 3', say: '칠 나머지 삼', ko: '7을 3으로 나눈 나머지' },
+    { emo: '🚂', en: 'colors[i % 3]', say: '', ko: '돌고 도는 칸 번호' },
+    { emo: '🔁', en: 'range', say: '레인지', ko: '몇 번 반복' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\nt.penup()\nt.goto(-240, 0)\nt.pendown()\ncolors = ["red", "gold", "blue"]\nfor i in range(8):\n    t.color(colors[i % 3])\n    t.begin_fill()\n    t.circle(20)\n    t.end_fill()\n    t.penup()\n    t.forward(55)\n    t.pendown()\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `색깔이 <b>빨강 → 노랑 → 파랑 → 빨강 → 노랑 → 파랑…</b> 하고 <b>돌고 돌아요</b> 🔄<br>색깔이 3개뿐인데 8칸을 칠했어요. 어떻게 한 걸까요?`,
+      words: true,
+      done: '색깔 3개가 계속 돌아서 반복돼요! 비밀은 <b>나머지(%)</b> 예요. <b>다음 →</b>',
+    },
+    {
+      title: '나머지 맛보기 🍬',
+      talk: `🍬 사탕 <b>7개</b>를 <b>3명</b>에게 똑같이 나누면, 2개씩 주고 <b>1개가 남아요.</b><br>이 <b>남은 수</b>를 <b>나머지</b>라고 하고, 코딩에서는 <b>%</b> 로 써요.`,
+      chips: [['7 % 3', '7을 3으로 나눈 나머지'], ['print( )', '화면에 말해']],
+      lines: [{ type: 'print(7 % 3)', note: '나머지는?' }],
+      done: '오른쪽 아래에 <b>1</b> 이 나왔죠? 7을 3으로 나누면 나머지가 1이에요! 🍬',
+    },
+    {
+      title: '0 1 2 0 1 2 … 🔄',
+      talk: `숫자를 <b>0부터 8까지</b> 하나씩 3으로 나눈 <b>나머지</b>를 말해 볼게요.<br>▶ 실행하고 <b>💬 거북이가 한 말</b> 칸을 보세요!`,
+      lines: [{ given: 'for i in range(9):', note: '9번 해 줘! (i = 0,1,2,…,8)' }, { box: [{ given: 'print(i % 3)', note: 'i 를 3으로 나눈 나머지' }] }],
+      done: '<b>0 1 2 0 1 2 0 1 2</b> 로 돌고 돌아요! 🔄<br>3으로 나눈 나머지는 항상 <b>0, 1, 2</b> 중 하나예요.',
+    },
+    {
+      title: '나누는 수 바꿔 보기 🔧',
+      talk: `% 뒤의 <b>나누는 수</b>를 바꾸면 어떻게 될까요?<br>2, 3, 4 를 눌러 보고 결과를 비교해 보세요!`,
+      lines: [{ given: 'for i in range(8):', note: '8번 해 줘!' }, { box: [{ blank: 'print(i % @)', answers: [null], start: ['3'], note: '나누는 수' }] }],
+      quick: ['2', '3', '4'],
+      done: '나누는 수가 <b>3</b> 이면 0,1,2 / <b>2</b> 이면 0,1 / <b>4</b> 이면 0,1,2,3 이 돌아요! 나누는 수 = 돌아가는 칸 수예요.',
+    },
+    {
+      title: '색깔 기차와 합치기 🚂',
+      talk: `색깔 기차는 <b>3칸</b>(0, 1, 2번)인데 칸이 8개예요. 칸 번호를 <b>i % 3</b> 으로 쓰면 번호가 <b>0 1 2 0 1 2…</b> 로 돌아서 칸이 모자라지 않아요!`,
+      chips: [['colors[i % 3]', 'i를 3으로 나눈 나머지 번호의 칸']],
+      lines: [
+        { prep: true }, START,
+        { given: 'colors = ["red", "gold", "blue"]', note: '색깔 기차 (3칸)' },
+        { given: 'for i in range(8):', note: '8번 해 줘!' },
+        { box: CAR({ type: 't.color(colors[i % 3])', note: '돌고 도는 번호의 색' }) },
+      ],
+      done: '빨강 노랑 파랑 빨강 노랑 파랑… 색깔이 돌고 돌아요! 🎨',
+    },
+    {
+      title: '도전! 색깔이 2개면? 🎨',
+      talk: `이번엔 색깔 기차가 <b>2칸</b>뿐이에요. 칸 번호가 2가지(0, 1)만 돌려면 <b>몇으로</b> 나눈 나머지를 써야 할까요?`,
+      lines: [
+        { prep: true }, START,
+        { given: 'colors = ["red", "blue"]', note: '색깔 기차 (2칸)' },
+        { given: 'for i in range(8):', note: '8번 해 줘!' },
+        { box: CAR({ blank: 't.color(colors[i % @])', answers: ['2'], note: '칸 수로 나눈 나머지' }) },
+      ],
+      hint: '칸이 <b>2개</b>니까 <b>2</b> 로 나눈 나머지를 써요. (0, 1, 0, 1 …)',
+      done: '빨강 파랑 빨강 파랑! 🔴🔵 나누는 수를 칸 수와 똑같이 하면 돼요.',
+    },
+    {
+      kind: 'free', title: '나만의 돌고 도는 무늬 🎨',
+      talk: `색깔을 더 넣고, <b>% 뒤의 숫자</b>도 칸 수에 맞게 바꿔 보세요!<br><span class="small">색깔 4개면 % 4, 5개면 % 5 예요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\nt.penup()\nt.goto(-240, 0)\nt.pendown()\n\ncolors = ["red", "orange", "gold", "green"]\nfor i in range(8):\n    t.color(colors[i % 4])\n    t.begin_fill()\n    t.circle(20)\n    t.end_fill()\n    t.penup()\n    t.forward(55)\n    t.pendown()\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

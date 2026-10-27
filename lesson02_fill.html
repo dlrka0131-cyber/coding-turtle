@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const STAR = [
+  { given: 'for i in range(5):', note: '5번 해 줘!' },
+  { box: [{ given: 't.forward(150)', note: '앞으로 150' }, { given: 't.left(144)', note: '별 각도로 돌기' }] },
+];
+const LESSON = {
+  num: 2,
+  topic: '색칠하기',
+  words: [
+    { emo: '🎨', en: 'color', say: '컬러', ko: '색깔' },
+    { emo: '🖍️', en: 'pensize', say: '펜 사이즈', ko: '펜 굵기' },
+    { emo: '🪣', en: 'begin_fill', say: '비긴 필', ko: '색칠 시작' },
+    { emo: '✅', en: 'end_fill', say: '엔드 필', ko: '색칠 끝' },
+    { emo: '⭕', en: 'circle', say: '서클', ko: '동그라미' },
+    { emo: '🌃', en: 'bgcolor', say: '비지 컬러', ko: '배경 색깔' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(6)\nt.pensize(5)\nt.color("red")\nt.begin_fill()\nt.circle(70)\nt.end_fill()\nt.penup()\nt.forward(130)\nt.pendown()\nt.color("gold")\nt.begin_fill()\nfor i in range(5):\n    t.forward(150)\n    t.left(144)\nt.end_fill()\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `오늘은 도형 안을 <b>색으로 꽉 채우는</b> 방법을 배워요.<br>빨간 사과와 노란 별을 만들어 볼 거예요!`,
+      words: true,
+      done: '선만 있던 도형이 색으로 꽉 찼죠? 오늘 이걸 만들어요! <b>다음 →</b>',
+    },
+    {
+      title: '펜 색깔 바꾸기 🎨',
+      talk: `거북이 펜의 <b>색깔</b>을 바꿔 봐요.<br>색깔 이름은 <b>영어</b>로, 꼭 <b>"따옴표"</b> 안에 써요.`,
+      chips: [['t', '내 거북이'], ['.', '~야,'], ['color', '색깔을 바꿔'], ['("red")', '빨강으로']],
+      sentence: '🗣️ "거북아, 펜을 빨간색으로 바꿔!"',
+      lines: [{ prep: true }, { type: 't.color("red")', note: '빨간색 펜' }, { given: 't.circle(80)', note: '동그라미 80' }],
+      done: '빨간 동그라미가 그려졌어요! 🔴',
+    },
+    {
+      title: '다른 색 골라 보기 🌈',
+      talk: `따옴표 안의 색깔 이름만 바꿔 보세요.<br>버튼을 눌러도 돼요!`,
+      lines: [{ prep: true }, { blank: 't.color("@")', answers: ['*'], start: ['blue'], note: '무슨 색 펜?' }, { given: 't.circle(80)', note: '동그라미 80' }],
+      quick: ['green', 'gold', 'purple', 'pink'],
+      done: '색깔 이름 하나로 펜 색이 바뀌었어요! 👍',
+    },
+    {
+      title: '펜 굵게 하기 🖍️',
+      talk: `선이 너무 가늘죠? <b>pensize</b>로 펜을 <b>굵게</b> 만들어요.<br>숫자가 클수록 <b>뚱뚱한</b> 선이 돼요.`,
+      chips: [['pensize', '펜 굵기'], ['(10)', '10만큼 굵게']],
+      lines: [{ prep: true }, { given: 't.color("red")', note: '빨간색 펜' }, { type: 't.pensize(10)', note: '펜 굵기 10' }, { given: 't.circle(80)', note: '동그라미 80' }],
+      done: '크레파스처럼 뚱뚱한 선이 됐어요! 🖍️',
+    },
+    {
+      title: '색칠 시작! 🪣',
+      talk: `이제 동그라미 안을 <b>색칠</b>해요!<br>그리기 <b>전에</b> "색칠 시작!", 다 그린 <b>뒤에</b> "색칠 끝!" 하고 말해요.`,
+      chips: [['begin_fill()', '색칠 시작!'], ['end_fill()', '색칠 끝! 칠해!']],
+      sentence: '💡 시작과 끝 사이에 그린 모양이 색으로 꽉 채워져요. 샌드위치처럼!',
+      lines: [
+        { prep: true },
+        { given: 't.color("red")', note: '빨간색 펜' },
+        { type: 't.begin_fill()', note: '색칠 시작!' },
+        { given: 't.circle(80)', note: '동그라미 80' },
+        { given: 't.end_fill()', note: '색칠 끝!' },
+      ],
+      done: '빨간 사과 완성! 🍎 동그라미 안이 꽉 찼죠?',
+    },
+    {
+      title: '색칠 끝 쓰기 ✅',
+      talk: `이번엔 <b>색칠 끝!</b> 줄을 직접 써 봐요.<br>이 줄이 없으면 거북이가 색칠을 안 해요!`,
+      lines: [
+        { prep: true },
+        { given: 't.color("green")', note: '초록색 펜' },
+        { given: 't.begin_fill()', note: '색칠 시작!' },
+        { given: 'for i in range(4):', note: '4번 해 줘!' },
+        { box: [{ given: 't.forward(120)', note: '앞으로 120' }, { given: 't.left(90)', note: '왼쪽으로 돌기' }] },
+        { type: 't.end_fill()', note: '색칠 끝!' },
+      ],
+      done: '초록 네모가 꽉 찼어요! 🟩',
+    },
+    {
+      title: '도전! 노란 별 칠하기 ⭐',
+      talk: `별 앞뒤에 <b>색칠 시작</b>과 <b>색칠 끝</b>을 넣어 보세요.<br>빈칸에 알맞은 영어를 써요.`,
+      lines: [
+        { prep: true },
+        { given: 't.color("gold")', note: '금색 펜' },
+        { blank: 't.@()', answers: ['begin_fill'], note: '색칠 시작!' },
+        ...STAR,
+        { blank: 't.@()', answers: ['end_fill'], note: '색칠 끝!' },
+      ],
+      hint: '위 빈칸은 <b>begin_fill</b> (비긴 필 = 시작), 아래 빈칸은 <b>end_fill</b> (엔드 필 = 끝)이에요.<br><span class="small">가운데 줄 _ 은 Shift + 빼기(-) 키예요.</span>',
+      done: '반짝반짝 노란 별 완성! ⭐',
+    },
+    {
+      kind: 'free', title: '나만의 색칠 그림 🎨',
+      talk: `색깔, 굵기, 크기를 마음대로 바꿔 보세요!<br><span class="small">맨 위 bgcolor 줄은 <b>배경 색깔</b>이에요. "black" 으로 바꾸면 밤하늘이 돼요 🌃</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nturtle.bgcolor("lightyellow")\n\nt.pensize(5)\nt.color("red")\nt.begin_fill()\nt.circle(80)\nt.end_fill()\n\nt.color("gold")\nt.begin_fill()\nfor i in range(5):\n    t.forward(150)\n    t.left(144)\nt.end_fill()\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

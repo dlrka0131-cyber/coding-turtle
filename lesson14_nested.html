@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>14차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const FAST = { given: 't.speed(0)', note: '가장 빠르게!' };
+const LEAF_IN = [{ given: 't.circle(100, 90)', note: '동그라미 조각 (1/4)' }, { given: 't.left(90)', note: '왼쪽으로 돌기' }];
+const LESSON = {
+  num: 14,
+  topic: '반복 안의 반복',
+  words: [
+    { emo: '🍕', en: 'circle(100, 90)', say: '서클', ko: '동그라미 조각만' },
+    { emo: '🍃', en: 'leaf', say: '리프', ko: '잎사귀' },
+    { emo: '🔁', en: 'for i', say: '포 아이', ko: '바깥 반복' },
+    { emo: '🔂', en: 'for j', say: '포 제이', ko: '안쪽 반복' },
+    { emo: '⚡', en: 'speed(0)', say: '스피드', ko: '가장 빠르게' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\nt.color("green")\nfor i in range(4):\n    for j in range(2):\n        t.circle(100, 90)\n        t.left(90)\n    t.left(90)\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `네 잎 <b>클로버</b> 🍀 를 그려요!<br>잎사귀 하나를 그리는 <b>반복</b> 안에서, 잎사귀를 <b>또 4번 반복</b>해요. 반복 안의 반복이에요!`,
+      words: true,
+      done: '잎사귀 4장! 🍀 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '동그라미 조각 🍕',
+      talk: `<b>t.circle(100)</b> 은 동그라미 한 바퀴예요.<br>뒤에 숫자를 하나 더 쓰면 그만큼의 <b>조각</b>만 그려요. <b>(100, 90)</b> 은 동그라미의 <b>1/4 조각</b>이에요!`,
+      chips: [['t.circle', '동그라미 그려'], ['(100, 90)', '크기 100, 90도만큼만']],
+      lines: [{ prep: true }, FAST, { type: 't.circle(100, 90)', note: '1/4 조각' }],
+      done: '동그라미의 1/4만 그려졌어요! 🍕 부채 모양이에요.',
+    },
+    {
+      title: '잎사귀 만들기 🍃',
+      talk: `조각 → <b>90도 돌기</b> → 조각 → <b>90도 돌기</b> 하면 <b>뾰족한 잎사귀</b> 🍃 가 돼요!<br>마지막 줄을 직접 써 보세요.`,
+      lines: [
+        { prep: true }, FAST,
+        { given: 't.color("green")', note: '초록색 펜' },
+        { given: 't.begin_fill()', note: '색칠 시작' },
+        { given: 't.circle(100, 90)', note: '1/4 조각' },
+        { given: 't.left(90)', note: '왼쪽으로 돌기' },
+        { given: 't.circle(100, 90)', note: '1/4 조각' },
+        { type: 't.left(90)', note: '왼쪽으로 돌기' },
+        { given: 't.end_fill()', note: '색칠 끝' },
+      ],
+      done: '초록 잎사귀 한 장 완성! 🍃',
+    },
+    {
+      title: '잎사귀를 반복으로 줄이기 🔁',
+      talk: `잎사귀 속의 <b>(조각 + 돌기)</b> 2줄이 <b>2번</b> 나왔어요.<br>반복 상자로 줄여 볼까요? <b>for j in range(2):</b> 를 써 보세요. (<b>j</b> 는 i 처럼 그냥 번호표 이름이에요)`,
+      chips: [['for j in range(2)', '2번 해 줘']],
+      lines: [
+        { prep: true }, FAST,
+        { given: 't.color("green")', note: '초록색 펜' },
+        { given: 't.begin_fill()', note: '색칠 시작' },
+        { type: 'for j in range(2):', note: '2번 해 줘!' },
+        { box: LEAF_IN },
+        { given: 't.end_fill()', note: '색칠 끝' },
+      ],
+      done: '똑같은 잎사귀가 나왔죠? 4줄이 3줄로 줄었어요! 🍃',
+    },
+    {
+      kind: 'more', title: '잎사귀 4장 붙이기 🍀',
+      talk: `<b>잎사귀 한 장 + 90도 돌기</b>를 <b>4번</b> 하면 네 잎 클로버가 돼요.<br><b>➕ 한 번 더!</b>를 눌러서 완성해 보세요.`,
+      before: [FAST, { given: 't.color("green")', note: '초록색 펜' }],
+      pair: [{ given: 'for j in range(2):', note: '잎사귀 한 장' }, { box: LEAF_IN }, { given: 't.left(90)', note: '다음 잎 자리로 돌기' }],
+      need: 4,
+      moreLabel: '잎사귀+돌기',
+      done: '네 잎 클로버! 🍀<br>그런데 같은 묶음을 <b>4번</b> 썼어요. 이것도 <b>반복 상자</b>에 넣으면 줄어들어요. 반복 상자 안에 반복 상자를요!',
+    },
+    {
+      title: '반복 안의 반복 🔁🔁',
+      talk: `바깥 반복 <b>for i</b> 는 <b>"잎사귀 4번"</b>, 안쪽 반복 <b>for j</b> 는 <b>"한 잎사귀 = 2번"</b> 이에요.<br>바깥 반복 줄을 직접 써 보세요!`,
+      chips: [['for i in range(4)', '잎사귀를 4번'], ['for j in range(2)', '한 잎사귀는 조각 2번']],
+      lines: [
+        { prep: true }, FAST,
+        { given: 't.color("green")', note: '초록색 펜' },
+        { type: 'for i in range(4):', note: '바깥 반복: 4번!' },
+        { box: [
+          { given: 'for j in range(2):', note: '안쪽 반복: 2번!' },
+          { box: LEAF_IN },
+          { given: 't.left(90)', note: '다음 잎 자리로 돌기' },
+        ], label: '🔁 바깥 반복 상자 안' },
+      ],
+      done: '반복 상자 안에 또 반복 상자! 🍀 이게 <b>반복 안의 반복</b>이에요. 12줄이 6줄로 줄었어요!',
+    },
+    {
+      title: '도전! 잎사귀 8장 🌸',
+      talk: `잎사귀를 <b>8장</b>으로 늘려 봐요! 한 바퀴는 360도예요.<br>8장이면 한 장마다 <b>얼마씩</b> 돌아야 할까요? 빈칸 2개를 채워 보세요.`,
+      lines: [
+        { prep: true }, FAST,
+        { given: 't.color("pink")', note: '분홍색 펜' },
+        { blank: 'for i in range(@):', answers: ['8'], note: '잎사귀 몇 장?' },
+        { box: [
+          { given: 'for j in range(2):', note: '안쪽 반복: 2번!' },
+          { box: LEAF_IN },
+          { blank: 't.left(@)', answers: ['45'], note: '다음 잎 자리로 얼마나 돌까?' },
+        ], label: '🔁 바깥 반복 상자 안' },
+      ],
+      hint: '잎사귀 <b>8</b>장! 도는 각도는 360 ÷ 8 = <b>45</b> 예요.',
+      done: '꽃잎 8장 꽃! 🌸 정말 예뻐요!',
+    },
+    {
+      kind: 'free', title: '나만의 꽃무늬 🎨',
+      talk: `바깥 반복 횟수와 도는 각도(<b>횟수 × 각도 = 360</b>), 색깔, 조각 크기를 마음대로 바꿔 보세요!<br><span class="small">아래 코드는 색깔이 돌고 도는 12장짜리 꽃이에요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\n\ncolors = ["red", "orange", "purple"]\nfor i in range(12):\n    t.color(colors[i % 3])\n    for j in range(2):\n        t.circle(100, 60)\n        t.left(120)\n    t.left(30)\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

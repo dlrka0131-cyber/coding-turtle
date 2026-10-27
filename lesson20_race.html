@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+// ===== 게임 차시 공통 부품 (build.py 가 //@@COMMON 자리에 붙여 넣는다) =====
+// 빨간 경기장 (가로 -150~150, 세로 -100~100)
+const ARENA = { fold: [
+  { given: 'w = turtle.Turtle()', note: '경기장 그릴 거북이 w' },
+  { given: 'w.hideturtle()', note: '거북이 숨기기' },
+  { given: 'w.speed(0)', note: '가장 빠르게' },
+  { given: 'w.color("red")', note: '빨간색' },
+  { given: 'w.pensize(4)', note: '굵게' },
+  { given: 'w.penup()', note: '펜 들기' },
+  { given: 'w.goto(-150, -100)', note: '왼쪽 아래 모서리로' },
+  { given: 'w.pendown()', note: '펜 내리기' },
+  { given: 'for side in range(2):', note: '2번 해 줘!' },
+  { box: [{ given: 'w.forward(300)', note: '가로 벽' }, { given: 'w.left(90)', note: '돌기' }, { given: 'w.forward(200)', note: '세로 벽' }, { given: 'w.left(90)', note: '돌기' }] },
+], title: '빨간 경기장 그리기 (신경 쓰지 마세요)' };
+const ARENA_PY = 'w = turtle.Turtle()\nw.hideturtle()\nw.speed(0)\nw.color("red")\nw.pensize(4)\nw.penup()\nw.goto(-150, -100)\nw.pendown()\nfor side in range(2):\n    w.forward(300)\n    w.left(90)\n    w.forward(200)\n    w.left(90)\n';
+
+// 방향키 4개 (6차시에서 만든 것). after 를 주면 매번 그 줄도 실행한다. player 는 움직일 거북이 이름.
+const DIRS = [['up', 90, 'Up', '위'], ['down', 270, 'Down', '아래'], ['left', 180, 'Left', '왼쪽'], ['right', 0, 'Right', '오른쪽']];
+const KEYS = (after, listen = true, player = 't') => {
+  const out = [];
+  DIRS.forEach(([n, a, k, ko]) => {
+    out.push({ given: `def go_${n}():`, note: `${ko}으로` });
+    const body = [{ given: `${player}.setheading(${a})`, note: `${ko}쪽을 봐` }, { given: `${player}.forward(20)`, note: '앞으로 20' }];
+    if (after) body.push(after);
+    out.push({ box: body });
+  });
+  DIRS.forEach(([n, a, k, ko]) => out.push({ given: `turtle.onkey(go_${n}, "${k}")`, note: `${ko} 화살표 키` }));
+  if (listen) out.push({ given: 'turtle.listen()', note: '귀 열기' });
+  return { fold: out, title: '방향키 코드 20줄 (6차시에서 만든 것)' };
+};
+const keysPy = (after = '', listen = true, player = 't') => {
+  let s = '';
+  DIRS.forEach(([n, a]) => { s += `def go_${n}():\n    ${player}.setheading(${a})\n    ${player}.forward(20)\n` + (after ? `    ${after}\n` : ''); });
+  DIRS.forEach(([n, a, k]) => { s += `turtle.onkey(go_${n}, "${k}")\n`; });
+  return s + (listen ? 'turtle.listen()\n' : '');
+};
+
+// 코인 / 좀비 / 점수판
+const COIN = { fold: [
+  { given: 'coin = turtle.Turtle()', note: '코인 만들기' },
+  { given: 'coin.shape("circle")', note: '동그라미 모양' },
+  { given: 'coin.color("gold")', note: '금색' },
+  { given: 'coin.penup()', note: '펜 들기' },
+  { given: 'coin.goto(100, 0)', note: '코인 놓을 자리' },
+], title: '코인 만들기 5줄 (이미 써 있어요)' };
+const COIN_PY = 'coin = turtle.Turtle()\ncoin.shape("circle")\ncoin.color("gold")\ncoin.penup()\ncoin.goto(100, 0)\n';
+const ENEMY = (x, y, fold = true) => {
+  const lines = [
+    { given: 'enemy = turtle.Turtle()', note: '좀비 만들기' },
+    { given: 'enemy.shape("turtle")', note: '거북이 모양' },
+    { given: 'enemy.color("green")', note: '초록색 좀비' },
+    { given: 'enemy.penup()', note: '펜 들기' },
+    { given: `enemy.goto(${x}, ${y})`, note: '좀비 놓을 자리' },
+  ];
+  return fold ? { fold: lines, title: '좀비 만들기 5줄 (이미 써 있어요)' } : lines;
+};
+const ENEMY_PY = (x, y) => `enemy = turtle.Turtle()\nenemy.shape("turtle")\nenemy.color("green")\nenemy.penup()\nenemy.goto(${x}, ${y})\n`;
+const BOARD = { fold: [
+  { given: 'board = turtle.Turtle()', note: '점수판 거북이 board' },
+  { given: 'board.hideturtle()', note: '숨기기' },
+  { given: 'board.penup()', note: '펜 들기' },
+  { given: 'board.goto(-140, 105)', note: '왼쪽 위로' },
+  { given: 'board.write("Score: 0", font=("Arial", 18, "bold"))', note: '처음 점수판' },
+], title: '점수판 만들기 5줄 (이미 써 있어요)' };
+const BOARD_PY = 'board = turtle.Turtle()\nboard.hideturtle()\nboard.penup()\nboard.goto(-140, 105)\nboard.write("Score: 0", font=("Arial", 18, "bold"))\n';
+
+// 뱀
+const SNAKE = { fold: [
+  { given: 'snakes = []', note: '뱀 기차 (빈 목록)' },
+  { given: 'for i in range(5):', note: '5칸 만들기!' },
+  { box: [
+    { given: 'body = turtle.Turtle()', note: '몸통 만들기' },
+    { given: 'body.shape("square")', note: '네모 모양' },
+    { given: 'body.color("green")', note: '초록색' },
+    { given: 'body.penup()', note: '펜 들기' },
+    { given: 'body.goto(-120 - 20 * i, 0)', note: 'i번째 칸 자리' },
+    { given: 'snakes.append(body)', note: '기차에 붙이기' },
+  ] },
+  { given: 'snakes[0].color("darkgreen")', note: '머리는 진한 초록' },
+], title: '뱀 몸통 만들기 (25차시에서 만든 것)' };
+const SNAKE_PY = 'snakes = []\nfor i in range(5):\n    body = turtle.Turtle()\n    body.shape("square")\n    body.color("green")\n    body.penup()\n    body.goto(-120 - 20 * i, 0)\n    snakes.append(body)\nsnakes[0].color("darkgreen")\n';
+const FOLLOW = [
+  { given: 'for i in range(len(snakes) - 1, 0, -1):', note: '꼬리부터 앞으로' },
+  { box: [{ given: 'snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())', note: '앞 칸 자리로' }] },
+];
+const FOLLOW_PY = '    for i in range(len(snakes) - 1, 0, -1):\n        snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())\n';
+// 뱀 방향키 (반대 방향으로는 못 돌게 막는 if 포함)
+const STEER_DIRS = [['up', 90, 270, 'Up', '위'], ['down', 270, 90, 'Down', '아래'], ['left', 180, 0, 'Left', '왼쪽'], ['right', 0, 180, 'Right', '오른쪽']];
+const STEER = (() => {
+  const out = [];
+  STEER_DIRS.forEach(([n, a, bad, k, ko]) => {
+    out.push({ given: `def go_${n}():`, note: `${ko}으로` });
+    out.push({ box: [{ given: `if snakes[0].heading() != ${bad}:`, note: '반대 방향이 아니면' }, { box: [{ given: `snakes[0].setheading(${a})`, note: `${ko}쪽을 봐` }] }] });
+  });
+  STEER_DIRS.forEach(([n, a, bad, k, ko]) => out.push({ given: `turtle.onkey(go_${n}, "${k}")`, note: `${ko} 화살표 키` }));
+  out.push({ given: 'turtle.listen()', note: '귀 열기' });
+  return { fold: out, title: '방향키 코드 (27차시에서 만든 것)' };
+})();
+const STEER_PY = STEER_DIRS.map(([n, a, bad]) => `def go_${n}():\n    if snakes[0].heading() != ${bad}:\n        snakes[0].setheading(${a})\n`).join('') + STEER_DIRS.map(([n, a, bad, k]) => `turtle.onkey(go_${n}, "${k}")\n`).join('') + 'turtle.listen()\n';
+
+// 선수 준비: 이름, 색깔, 레인(세로 위치)
+const RACER = (n, color, y, create = true) => [
+  ...(create ? [{ given: `${n} = turtle.Turtle()`, note: `${n} 만들기` }, { given: `${n}.shape("turtle")`, note: '거북이 모양' }] : []),
+  { given: `${n}.color("${color}")`, note: `${color}색 유니폼` },
+  { given: `${n}.speed(6)`, note: '적당한 속도' },
+  { given: `${n}.penup()`, note: '펜 들기' },
+  { given: `${n}.goto(-150, ${y})`, note: '출발선으로' },
+  { given: `${n}.pendown()`, note: '펜 내리기' },
+];
+const FINISH = { fold: [
+  { given: 'w = turtle.Turtle()', note: '결승선 그릴 거북이 w' },
+  { given: 'w.hideturtle()', note: '숨기기' },
+  { given: 'w.speed(0)', note: '가장 빠르게' },
+  { given: 'w.color("red")', note: '빨간색' },
+  { given: 'w.pensize(4)', note: '굵게' },
+  { given: 'w.penup()', note: '펜 들기' },
+  { given: 'w.goto(150, -90)', note: '결승선 아래 끝으로' },
+  { given: 'w.pendown()', note: '펜 내리기' },
+  { given: 'w.goto(150, 90)', note: '결승선 위 끝까지' },
+], title: '빨간 결승선 그리기 (신경 쓰지 마세요)' };
+const FINISH_PY = 'w = turtle.Turtle()\nw.hideturtle()\nw.speed(0)\nw.color("red")\nw.pensize(4)\nw.penup()\nw.goto(150, -90)\nw.pendown()\nw.goto(150, 90)\n';
+const racerPy = (n, color, y, create = true) => (create ? `${n} = turtle.Turtle()\n${n}.shape("turtle")\n` : '') + `${n}.color("${color}")\n${n}.speed(6)\n${n}.penup()\n${n}.goto(-150, ${y})\n${n}.pendown()\n`;
+const LESSON = {
+  num: 20,
+  topic: '거북이 달리기 경주',
+  words: [
+    { emo: '🐢', en: 't2', say: '티 투', ko: '두 번째 거북이' },
+    { emo: '🆕', en: 'turtle.Turtle()', say: '', ko: '새 거북이 만들기' },
+    { emo: '🎲', en: 'random.randint', say: '랜덤 인트', ko: '숫자 하나 뽑기' },
+    { emo: '🏁', en: 'goto', say: '고투', ko: '그 자리로 가' },
+    { emo: '🔁', en: 'range', say: '레인지', ko: '몇 번 반복' },
+  ],
+  preview: `import random\nt = turtle.Turtle()\n${racerPy('t', 'red', 50, false)}t.shape("turtle")\n${racerPy('t2', 'blue', 0)}${racerPy('t3', 'green', -50)}${FINISH_PY}for i in range(50):\n    t.forward(random.randint(1, 12))\n    t2.forward(random.randint(1, 12))\n    t3.forward(random.randint(1, 12))\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `거북이 <b>세 마리</b>가 <b>달리기 경주</b>를 해요! 🏁<br>누가 이길지는 <b>주사위</b>가 정해요. ▶ 미리보기를 여러 번 눌러 보세요!`,
+      words: true,
+      done: '누가 이길지 매번 달라요! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '두 번째 거북이 🐢🐢',
+      talk: `지금까지는 거북이 <b>한 마리(t)</b> 뿐이었어요. 거북이를 더 만들 수 있어요!<br><b>t2</b> 라는 이름으로 <b>두 번째 거북이</b>를 만들어 봐요. 첫 줄을 직접 써 보세요.`,
+      chips: [['t2', '두 번째 거북이 이름'], ['=', '넣어!'], ['turtle.Turtle()', '새 거북이 만들기']],
+      sentence: '🗣️ "t2 라는 이름으로 새 거북이를 만들어!"',
+      lines: [
+        { prep: true }, { given: 't.color("red")', note: 't 는 빨간색' },
+        { type: 't2 = turtle.Turtle()', note: '두 번째 거북이!' },
+        { given: 't2.shape("turtle")', note: '거북이 모양' },
+        { given: 't2.color("blue")', note: 't2 는 파란색' },
+        { given: 't2.penup()', note: '펜 들기' },
+        { given: 't2.goto(0, -40)', note: '아래쪽 자리로' },
+      ],
+      done: '거북이가 두 마리! 🐢🐢 빨간 t 와 파란 t2 예요.',
+    },
+    {
+      title: '유니폼 색깔 정하기 👕',
+      talk: `t2 의 유니폼 색깔을 바꿔 보세요!<br>버튼을 눌러도 돼요.`,
+      lines: [
+        { prep: true }, { given: 't.color("red")', note: 't 는 빨간색' },
+        { given: 't2 = turtle.Turtle()', note: '두 번째 거북이' },
+        { given: 't2.shape("turtle")', note: '거북이 모양' },
+        { blank: 't2.color("@")', answers: ['*'], start: ['blue'], note: 't2 는 무슨 색?' },
+        { given: 't2.penup()', note: '펜 들기' },
+        { given: 't2.goto(0, -40)', note: '아래쪽 자리로' },
+      ],
+      quick: ['blue', 'green', 'purple', 'orange'],
+      done: '거북이마다 색깔이 달라요! 👕',
+    },
+    {
+      title: '출발선에 서기 🏁',
+      talk: `두 마리를 <b>출발선</b>에 나란히 세워요. 출발선은 가로 <b>-150</b> 이고, 위쪽 레인 <b>40</b>, 아래쪽 레인 <b>-40</b> 이에요.<br>t2 를 아래쪽 레인으로 보내는 줄을 직접 써 보세요!`,
+      chips: [['t2.goto', 't2 가 그 자리로 가'], ['(-150, -40)', '출발선, 아래쪽 레인']],
+      lines: [
+        { prep: true }, { given: 't.color("red")', note: 't 는 빨간색' },
+        { given: 't2 = turtle.Turtle()', note: '두 번째 거북이' }, { given: 't2.shape("turtle")', note: '거북이 모양' }, { given: 't2.color("blue")', note: 't2 는 파란색' },
+        { given: 't.penup()', note: 't 펜 들기' }, { given: 't.goto(-150, 40)', note: 't 는 위쪽 레인 출발선' },
+        { given: 't2.penup()', note: 't2 펜 들기' }, { type: 't2.goto(-150, -40)', note: 't2 는 아래쪽 레인 출발선' },
+      ],
+      done: '두 마리가 출발선에 섰어요! 🏁',
+    },
+    {
+      title: '주사위 굴려 달리기 🎲',
+      talk: `이제 달려요! 한 번에 얼마나 갈지는 <b>주사위</b>가 정해요. <b>random.randint(1, 20)</b> 은 <b>1부터 20 사이 숫자 하나 뽑기</b>예요.<br>t2 의 달리기 줄을 직접 써 보세요. 여러 번 눌러 보면 매번 달라요!`,
+      chips: [['t2.forward', 't2 가 앞으로'], ['(random.randint(1, 20))', '1~20 중 뽑은 만큼']],
+      lines: [
+        { prep: true }, { given: 'import random', note: '주사위 상자 열기' }, { given: 't.color("red")', note: 't 는 빨간색' },
+        { given: 't2 = turtle.Turtle()', note: '두 번째 거북이' }, { given: 't2.shape("turtle")', note: '거북이 모양' }, { given: 't2.color("blue")', note: 't2 는 파란색' },
+        { given: 't.penup()', note: 't 펜 들기' }, { given: 't.goto(-150, 40)', note: 't 출발선' },
+        { given: 't2.penup()', note: 't2 펜 들기' }, { given: 't2.goto(-150, -40)', note: 't2 출발선' },
+        { given: 't.pendown()', note: 't 펜 내리기' }, { given: 't2.pendown()', note: 't2 펜 내리기' },
+        { given: 't.forward(random.randint(1, 20))', note: 't 달리기' },
+        { type: 't2.forward(random.randint(1, 20))', note: 't2 달리기' },
+      ],
+      done: '▶ 실행을 여러 번 눌러 보세요! 🎲 누가 더 멀리 갔는지 매번 달라요.',
+    },
+    {
+      title: '반복해서 경주하기 🔁',
+      talk: `한 번만 달리면 경주가 아니죠! <b>주사위를 여러 번</b> 굴리며 계속 달려요.<br>두 마리가 번갈아 달리는 과정을 <b>몇 번</b> 반복할까요? 빈칸에 <b>50</b>을 써 보세요.`,
+      lines: [
+        { prep: true }, { given: 'import random', note: '주사위 상자 열기' },
+        { fold: [...RACER('t', 'red', 40, false), ...RACER('t2', 'blue', -40)], title: '선수 두 명 준비 (이미 써 있어요)' }, FINISH,
+        { blank: 'for i in range(@):', answers: ['50'], note: '몇 번 해 줘?' },
+        { box: [{ given: 't.forward(random.randint(1, 12))', note: 't 달리기' }, { given: 't2.forward(random.randint(1, 12))', note: 't2 달리기' }] },
+      ],
+      hint: '<b>50</b> 번이면 결승선(빨간 선)까지 충분히 달려요!',
+      done: '결승선을 향해 달리는 경주 완성! 🏁 누가 먼저 도착했나요?',
+    },
+    {
+      title: '도전! 세 번째 선수 🐢🐢🐢',
+      talk: `t3 가 새로 왔어요! 이미 준비는 끝났고, t3 의 달리기 줄 빈칸만 채우면 돼요.<br>주사위를 굴리는 영어 이름을 써 보세요.`,
+      lines: [
+        { prep: true }, { given: 'import random', note: '주사위 상자 열기' },
+        { fold: [...RACER('t', 'red', 50, false), ...RACER('t2', 'blue', 0), ...RACER('t3', 'green', -50)], title: '선수 세 명 준비 (이미 써 있어요)' }, FINISH,
+        { given: 'for i in range(50):', note: '50번 해 줘!' },
+        { box: [
+          { given: 't.forward(random.randint(1, 12))', note: 't 달리기' },
+          { given: 't2.forward(random.randint(1, 12))', note: 't2 달리기' },
+          { blank: 't3.forward(random.@(1, 12))', answers: ['randint'], note: 't3 달리기' },
+        ] },
+      ],
+      hint: '위 줄을 보고 따라 해요! 숫자 뽑기는 <b>randint</b> (랜덤 인트)예요.',
+      done: '세 마리 경주 완성! 🏆 누가 1등인지 응원해 보세요!',
+    },
+    {
+      kind: 'free', title: '나만의 경주 🎨',
+      talk: `색깔, 속도 숫자(<b>12</b>), 반복 횟수를 마음대로 바꿔 보세요!<br><span class="small">네 번째 선수 t4 를 만들어 볼 수도 있어요.</span>`,
+      code: `import random\nt = turtle.Turtle()\n${racerPy('t', 'red', 50, false)}t.shape("turtle")\n${racerPy('t2', 'blue', 0)}${racerPy('t3', 'green', -50)}${FINISH_PY}for i in range(50):\n    t.forward(random.randint(1, 12))\n    t2.forward(random.randint(1, 12))\n    t3.forward(random.randint(1, 12))\n`.replace('import random\nt = turtle.Turtle()', 'import turtle\nimport random\nt = turtle.Turtle()'),
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

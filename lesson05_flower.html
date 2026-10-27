@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+// 4차시에서 만든 square 명령 (오늘은 이미 써 있다)
+const SQUARE = [
+  { given: 'def square():', note: '"square" 명령 만들기' },
+  { box: [
+    { given: 'for i in range(4):', note: '4번 해 줘!' },
+    { box: [{ given: 't.forward(100)', note: '앞으로 100' }, { given: 't.left(90)', note: '왼쪽으로 돌기' }] },
+  ], label: '📦 square 명령 상자 안' },
+];
+const FAST = { given: 't.speed(0)', note: '가장 빠르게!' };
+const LESSON = {
+  num: 5,
+  topic: '네모로 꽃 피우기',
+  words: [
+    { emo: '⬜', en: 'square()', say: '스퀘어', ko: '네모 명령 실행' },
+    { emo: '↩️', en: 'left', say: '레프트', ko: '왼쪽으로 돌아' },
+    { emo: '🔁', en: 'range(8)', say: '레인지', ko: '8번 반복해' },
+    { emo: '⚡', en: 'speed(0)', say: '스피드', ko: '가장 빠르게' },
+    { emo: '🎨', en: 'color', say: '컬러', ko: '색깔' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\nt.color("purple")\ndef square():\n    for i in range(4):\n        t.forward(100)\n        t.left(90)\nfor i in range(12):\n    square()\n    t.left(30)\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `지난 시간에 만든 <b>square(네모)</b> 명령으로 <b>꽃</b>을 피워요! 🌸<br>네모를 그리고, 조금 돌고, 또 네모를 그리면…?`,
+      words: true,
+      done: '네모 12개가 모여서 꽃이 됐어요! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '네모 명령 다시 보기 ⬜',
+      talk: `지난 시간에 만든 <b>square</b> 명령이 이미 써 있어요.<br>맨 아래에 <b>square()</b> 를 써서 불러 보세요!`,
+      lines: [{ prep: true }, ...SQUARE, { type: 'square()', note: '네모 명령 실행!' }],
+      done: '네모 하나! ⬜ 이제 이 네모로 꽃을 만들어 볼게요.',
+    },
+    {
+      title: '돌고 또 그리기 🔄',
+      talk: `네모를 그리고 <b>조금 돈 다음</b>, 네모를 <b>한 번 더</b> 그려요.<br>빈칸에 <b>돌 각도</b>를 넣어 보세요. 버튼을 눌러도 돼요!`,
+      lines: [
+        { prep: true }, ...SQUARE,
+        { given: 'square()', note: '네모 1' },
+        { blank: 't.left(@)', answers: [null], start: ['45'], note: '조금 돌기' },
+        { given: 'square()', note: '네모 2' },
+      ],
+      quick: ['20', '45', '90'],
+      done: '네모 2개가 비스듬히 겹쳤어요! 👀 이걸 계속하면 어떻게 될까요?',
+    },
+    {
+      kind: 'more', title: '한 장씩 꽃잎 붙이기 🌸',
+      talk: `<b>네모 그리기 + 45만큼 돌기</b>를 계속해 볼까요?<br><b>➕ 한 번 더!</b>를 눌러서 꽃을 완성해 보세요.`,
+      before: [{ given: 't.color("purple")', note: '보라색 펜' }, FAST, ...SQUARE],
+      pair: [{ given: 'square()', note: '네모' }, { given: 't.left(45)', note: '45만큼 돌기' }],
+      need: 8,
+      moreLabel: '네모+돌기',
+      done: '꽃 완성! 🌸<br>그런데 square() 와 t.left(45) 를 <b>8번이나</b> 썼어요. 1차시에 배운 <b>반복</b>을 쓰면 훨씬 짧아져요!',
+    },
+    {
+      title: '반복으로 꽃 피우기 🔁',
+      talk: `"네모 그리고 돌기"를 <b>8번 반복</b>하면 돼요!<br>빈칸에 <b>몇 번</b> 반복할지 써 보세요.`,
+      lines: [
+        { prep: true }, { given: 't.color("purple")', note: '보라색 펜' }, FAST, ...SQUARE,
+        { blank: 'for i in range(@):', answers: ['8'], note: '몇 번?' },
+        { box: [{ given: 'square()', note: '네모' }, { given: 't.left(45)', note: '45만큼 돌기' }] },
+      ],
+      hint: '꽃잎이 8장이니까 <b>8</b>번! <span class="small">(8번 × 45 = 360, 딱 한 바퀴예요)</span>',
+      done: '16줄이 3줄로! 반복으로 꽃을 피웠어요 🌸',
+    },
+    {
+      title: '도전! 꽃잎 12장 🌼',
+      talk: `이번엔 꽃잎을 <b>12장</b>으로 늘려요. 12번 반복하면 <b>얼마씩</b> 돌아야 딱 한 바퀴가 될까요?<br>빈칸에 도는 숫자를 써 보세요.`,
+      lines: [
+        { prep: true }, { given: 't.color("orange")', note: '주황색 펜' }, FAST, ...SQUARE,
+        { given: 'for i in range(12):', note: '12번 해 줘!' },
+        { box: [{ given: 'square()', note: '네모' }, { blank: 't.left(@)', answers: ['30'], note: '얼마나 돌까?' }] },
+      ],
+      hint: '한 바퀴는 360이에요. 360 ÷ 12 = <b>30</b>',
+      done: '꽃잎 12장 꽃 완성! 🌼 정말 멋져요!',
+    },
+    {
+      kind: 'free', title: '나만의 꽃 🎨',
+      talk: `반복 횟수, 도는 각도, 색깔, 네모 크기를 마음대로 바꿔 보세요!<br><span class="small">횟수 × 각도 = 360 이 되면 딱 한 바퀴 예쁜 꽃이 돼요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(0)\n\ndef square():\n    for i in range(4):\n        t.forward(100)\n        t.left(90)\n\nt.color("pink")\nfor i in range(18):\n    square()\n    t.left(20)\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

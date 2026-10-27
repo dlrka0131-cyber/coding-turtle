@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+// 왼쪽 끝에서 시작하게 옮겨 두는 줄 (goto는 8차시에 배워서 지금은 회색으로만)
+const START = { given: 't.penup(); t.goto(-250, 0); t.pendown()', note: '왼쪽 끝으로 (신경 쓰지 마세요)' };
+const LESSON = {
+  num: 3,
+  topic: '펜 들고 점프',
+  words: [
+    { emo: '⬆️', en: 'penup', say: '펜 업', ko: '펜 들기 (선 안 그림)' },
+    { emo: '⬇️', en: 'pendown', say: '펜 다운', ko: '펜 내리기 (선 그림)' },
+    { emo: '🪣', en: 'begin_fill', say: '비긴 필', ko: '색칠 시작' },
+    { emo: '✅', en: 'end_fill', say: '엔드 필', ko: '색칠 끝' },
+    { emo: '⭕', en: 'circle', say: '서클', ko: '동그라미' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(6)\nt.penup()\nt.goto(-250, 0)\nt.pendown()\nt.color("gray")\nfor i in range(5):\n    t.begin_fill()\n    t.circle(25)\n    t.end_fill()\n    t.penup()\n    t.forward(110)\n    t.pendown()\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `냇물을 건너는 <b>징검다리</b>를 만들어요!<br>돌 사이에 <b>선이 없죠?</b> 거북이가 <b>펜을 들고 점프</b>했기 때문이에요.`,
+      words: true,
+      done: '돌과 돌 사이가 떨어져 있죠? 오늘 이걸 만들어요! <b>다음 →</b>',
+    },
+    {
+      title: '앗, 선이 이어져요! 😵',
+      talk: `동그라미 2개를 <b>따로 떨어뜨려</b> 그리고 싶어요.<br>그런데 ▶ 실행해 보면… 어떻게 될까요?`,
+      lines: [
+        { prep: true }, START,
+        { given: 't.circle(30)', note: '동그라미' },
+        { given: 't.forward(150)', note: '앞으로 150' },
+        { given: 't.circle(30)', note: '동그라미' },
+      ],
+      done: '동그라미 사이에 <b>선이 생겨 버렸어요!</b> 😵<br>거북이는 움직일 때마다 선을 그리거든요. 선 없이 움직이는 방법을 배워 봐요!',
+    },
+    {
+      title: '펜 들기 ⬆️',
+      talk: `<b>penup</b> 은 <b>"펜을 들어!"</b> 라는 뜻이에요.<br>펜을 들면 거북이가 움직여도 <b>선이 안 생겨요.</b>`,
+      chips: [['penup', '펜을 들어'], ['()', '지금 해!']],
+      sentence: '🗣️ "거북아, 펜을 들어!"  ✍️ 종이에서 연필을 떼는 것처럼요.',
+      lines: [
+        { prep: true }, START,
+        { given: 't.forward(100)', note: '앞으로 100 (선 그림)' },
+        { type: 't.penup()', note: '펜 들기!' },
+        { given: 't.forward(100)', note: '앞으로 100 (선 없음)' },
+      ],
+      done: '처음 100은 선이 있고, 나중 100은 선이 없어요! 👀',
+    },
+    {
+      title: '펜 내리기 ⬇️',
+      talk: `펜을 들었으면 다시 <b>내려야</b> 그릴 수 있어요.<br><b>pendown</b> 은 <b>"펜을 내려!"</b> 라는 뜻이에요.`,
+      chips: [['pendown', '펜을 내려'], ['()', '지금 해!']],
+      lines: [
+        { prep: true }, START,
+        { given: 't.forward(80)', note: '앞으로 (선 그림)' },
+        { given: 't.penup()', note: '펜 들기' },
+        { given: 't.forward(80)', note: '앞으로 (선 없음)' },
+        { type: 't.pendown()', note: '펜 내리기!' },
+        { given: 't.forward(80)', note: '앞으로 (선 그림)' },
+      ],
+      done: '선 – 빈칸 – 선! 펜을 들고 내리는 걸 해냈어요! 👏',
+    },
+    {
+      title: '도전! 점선 그리기 ┄',
+      talk: `"그리고 – 들고 – 가고 – 내리고"를 <b>반복</b>하면 <b>점선</b>이 돼요!<br>빈칸에 <b>펜 들기</b>와 <b>펜 내리기</b>를 써 보세요.`,
+      lines: [
+        { prep: true }, START,
+        { given: 'for i in range(10):', note: '10번 해 줘!' },
+        { box: [
+          { given: 't.forward(25)', note: '선 그리기' },
+          { blank: 't.@()', answers: ['penup'], note: '펜 들기' },
+          { given: 't.forward(25)', note: '선 없이 가기' },
+          { blank: 't.@()', answers: ['pendown'], note: '펜 내리기' },
+        ] },
+      ],
+      hint: '위 빈칸은 <b>penup</b> (펜 업 = 들기), 아래 빈칸은 <b>pendown</b> (펜 다운 = 내리기)이에요.',
+      done: '멋진 점선 완성! ┄┄┄',
+    },
+    {
+      title: '징검다리 만들기 🪨',
+      talk: `색칠한 동그라미(돌)를 그리고, <b>펜을 들고</b> 점프! 이걸 5번 반복해요.<br>빈칸에 <b>돌 사이 간격</b> 숫자를 넣어 보세요. 버튼을 눌러도 돼요!`,
+      lines: [
+        { prep: true }, START,
+        { given: 't.color("gray")', note: '회색 돌' },
+        { given: 'for i in range(5):', note: '5번 해 줘!' },
+        { box: [
+          { given: 't.begin_fill()', note: '색칠 시작' },
+          { given: 't.circle(25)', note: '동그라미 돌' },
+          { given: 't.end_fill()', note: '색칠 끝' },
+          { given: 't.penup()', note: '펜 들기' },
+          { blank: 't.forward(@)', answers: [null], start: ['110'], note: '점프! (간격)' },
+          { given: 't.pendown()', note: '펜 내리기' },
+        ] },
+      ],
+      quick: ['70', '110', '130'],
+      done: '징검다리 완성! 🪨🪨🪨 간격 숫자를 바꾸면 돌 사이가 넓어지거나 좁아져요.',
+    },
+    {
+      kind: 'free', title: '나만의 징검다리 🎨',
+      talk: `돌 색깔, 크기, 간격, 개수를 마음대로 바꿔 보세요!<br><span class="small">circle 대신 네모를 그려도 돼요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.penup()\nt.goto(-250, 0)\nt.pendown()\n\nt.color("pink")\nfor i in range(5):\n    t.begin_fill()\n    t.circle(25)\n    t.end_fill()\n    t.penup()\n    t.forward(110)\n    t.pendown()\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

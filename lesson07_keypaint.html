@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+// 6차시에서 만든 방향키 (접어 두고 보여 준다)
+const ARROWS = { fold: [
+  { given: 'def go_up():', note: '위로' },
+  { box: [{ given: 't.setheading(90)', note: '위쪽을 봐' }, { given: 't.forward(30)', note: '앞으로 30' }] },
+  { given: 'def go_down():', note: '아래로' },
+  { box: [{ given: 't.setheading(270)', note: '아래쪽을 봐' }, { given: 't.forward(30)', note: '앞으로 30' }] },
+  { given: 'def go_left():', note: '왼쪽으로' },
+  { box: [{ given: 't.setheading(180)', note: '왼쪽을 봐' }, { given: 't.forward(30)', note: '앞으로 30' }] },
+  { given: 'def go_right():', note: '오른쪽으로' },
+  { box: [{ given: 't.setheading(0)', note: '오른쪽을 봐' }, { given: 't.forward(30)', note: '앞으로 30' }] },
+  { given: 'turtle.onkey(go_up, "Up")', note: '↑ 키' },
+  { given: 'turtle.onkey(go_down, "Down")', note: '↓ 키' },
+  { given: 'turtle.onkey(go_left, "Left")', note: '← 키' },
+  { given: 'turtle.onkey(go_right, "Right")', note: '→ 키' },
+], title: '지난 시간에 만든 방향키 12줄' };
+const LISTEN = { given: 'turtle.listen()', note: '귀 열기 (맨 마지막)' };
+const LESSON = {
+  num: 7,
+  topic: '키보드 그림판',
+  words: [
+    { emo: '⬆️', en: 'penup', say: '펜 업', ko: '펜 들기' },
+    { emo: '⬇️', en: 'pendown', say: '펜 다운', ko: '펜 내리기' },
+    { emo: '🧽', en: 'clear', say: '클리어', ko: '그림 지우기' },
+    { emo: '🎨', en: 'color', say: '컬러', ko: '색깔' },
+    { emo: '⌨️', en: 'onkey', say: '온 키', ko: '키를 누르면 ~해' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.pensize(4)\ndef go_up():\n    t.setheading(90)\n    t.forward(30)\ndef go_down():\n    t.setheading(270)\n    t.forward(30)\ndef go_left():\n    t.setheading(180)\n    t.forward(30)\ndef go_right():\n    t.setheading(0)\n    t.forward(30)\ndef pen_up():\n    t.penup()\ndef pen_down():\n    t.pendown()\ndef erase():\n    t.clear()\ndef color_red():\n    t.color("red")\nturtle.onkey(go_up, "Up")\nturtle.onkey(go_down, "Down")\nturtle.onkey(go_left, "Left")\nturtle.onkey(go_right, "Right")\nturtle.onkey(pen_up, "u")\nturtle.onkey(pen_down, "d")\nturtle.onkey(erase, "c")\nturtle.onkey(color_red, "r")\nturtle.listen()\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `화살표로 거북이를 움직이며 <b>그림</b>을 그리는 <b>키보드 그림판</b>이에요! 🎨<br><span class="small">▶ 미리보기를 누르고 <b>↑↓←→</b> 로 그려 보세요. <b>u</b>=펜 들기, <b>d</b>=펜 내리기, <b>c</b>=지우기, <b>r</b>=빨간색 이에요.</span>`,
+      words: true,
+      done: '키보드로 그림을 그렸어요! 오늘은 <b>u d c r</b> 키를 직접 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '펜 들기 키 ⬆️',
+      talk: `<b>u</b> 키를 누르면 <b>펜을 드는</b> 명령이에요.<br>실행한 다음 <b>→</b> 로 그리다가 <b>u</b> 를 누르고 다시 <b>→</b> 를 눌러 보세요!`,
+      chips: [['turtle.onkey', '키를 누르면'], ['(pen_up, "u")', 'pen_up 해, u 키로']],
+      lines: [
+        { prep: true }, ARROWS,
+        { given: 'def pen_up():', note: '"pen_up" 명령 만들기' },
+        { box: [{ given: 't.penup()', note: '펜 들기' }], label: '📦 pen_up 명령 상자 안' },
+        { type: 'turtle.onkey(pen_up, "u")', note: 'u 키 → 펜 들기' },
+        LISTEN,
+      ],
+      done: '<b>u</b> 를 누르면 선이 안 그려져요! ✍️ 방향키로 확인해 보세요.',
+    },
+    {
+      title: '도전! 펜 내리기 키 ⬇️',
+      talk: `펜을 들었으면 다시 내릴 수 있어야겠죠?<br>빈칸 2개를 채워 <b>d</b> 키에 <b>펜 내리기</b>를 연결해 보세요.`,
+      lines: [
+        { prep: true }, ARROWS,
+        { given: 'def pen_up():', note: '"pen_up" 명령 만들기' },
+        { box: [{ given: 't.penup()', note: '펜 들기' }] },
+        { given: 'def pen_down():', note: '"pen_down" 명령 만들기' },
+        { box: [{ blank: 't.@()', answers: ['pendown'], note: '펜 내리기' }], label: '📦 pen_down 명령 상자 안' },
+        { given: 'turtle.onkey(pen_up, "u")', note: 'u 키 → 펜 들기' },
+        { blank: 'turtle.onkey(pen_down, "@")', answers: ['d'], note: 'd 키 → 펜 내리기' },
+        LISTEN,
+      ],
+      hint: '위 빈칸은 <b>pendown</b>, 아래 빈칸은 키 이름 <b>d</b> 예요. (따옴표 안에 d 하나만!)',
+      done: '<b>u</b> 로 펜 들고, <b>d</b> 로 내리고! 점선도 그릴 수 있어요 ┄┄',
+    },
+    {
+      title: '도전! 지우개 키 🧽',
+      talk: `그림을 망쳤을 때 <b>c</b> 키로 <b>싹 지우기</b>를 만들어요.<br>빈칸 2개를 채워 보세요.`,
+      lines: [
+        { prep: true }, ARROWS,
+        { given: 'def erase():', note: '"erase" 명령 만들기' },
+        { box: [{ blank: 't.@()', answers: ['clear'], note: '그림 지우기' }], label: '📦 erase 명령 상자 안' },
+        { blank: 'turtle.onkey(erase, "@")', answers: ['c'], note: 'c 키 → 지우기' },
+        LISTEN,
+      ],
+      hint: '위 빈칸은 <b>clear</b> (클리어 = 지우기), 아래 빈칸은 키 이름 <b>c</b> 예요.',
+      done: '<b>c</b> 키를 누르면 그림이 싹 지워져요! 🧽',
+    },
+    {
+      title: '도전! 색깔 바꾸는 키 🎨',
+      talk: `<b>r</b> 키를 누르면 <b>빨간색</b>이 되는 명령이에요.<br>빈칸에 색깔 이름을 써 보세요. 다른 색으로 바꿔도 돼요!`,
+      lines: [
+        { prep: true }, ARROWS,
+        { given: 'def change_color():', note: '"change_color" 명령 만들기' },
+        { box: [{ blank: 't.color("@")', answers: ['*'], start: ['red'], note: '무슨 색?' }], label: '📦 change_color 명령 상자 안' },
+        { given: 'turtle.onkey(change_color, "r")', note: 'r 키 → 색깔 바꾸기' },
+        LISTEN,
+      ],
+      quick: ['red', 'blue', 'green'],
+      done: '<b>r</b> 키를 누르고 방향키로 그려 보세요. 선 색깔이 바뀌었죠? 🌈',
+    },
+    {
+      kind: 'free', title: '나만의 키보드 그림판 🎨',
+      talk: `키 이름과 색깔, 숫자를 마음대로 바꿔 보세요!<br><span class="small">맨 아래에 <b>turtle.onkey(...)</b> 줄을 하나 더 쓰면 새 키가 생겨요. (예: "b" 키는 파란색)</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.pensize(4)\n\ndef go_up():\n    t.setheading(90)\n    t.forward(30)\ndef go_down():\n    t.setheading(270)\n    t.forward(30)\ndef go_left():\n    t.setheading(180)\n    t.forward(30)\ndef go_right():\n    t.setheading(0)\n    t.forward(30)\ndef pen_up():\n    t.penup()\ndef pen_down():\n    t.pendown()\ndef erase():\n    t.clear()\ndef color_red():\n    t.color("red")\ndef color_blue():\n    t.color("blue")\n\nturtle.onkey(go_up, "Up")\nturtle.onkey(go_down, "Down")\nturtle.onkey(go_left, "Left")\nturtle.onkey(go_right, "Right")\nturtle.onkey(pen_up, "u")\nturtle.onkey(pen_down, "d")\nturtle.onkey(erase, "c")\nturtle.onkey(color_red, "r")\nturtle.onkey(color_blue, "b")\nturtle.listen()\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

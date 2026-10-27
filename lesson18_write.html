@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>18차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const LESSON = {
+  num: 18,
+  topic: '화면에 글씨 쓰기',
+  words: [
+    { emo: '✍️', en: 'write', say: '라이트', ko: '글씨 쓰기' },
+    { emo: '🔠', en: 'font', say: '폰트', ko: '글씨체·크기' },
+    { emo: '💪', en: '"bold"', say: '볼드', ko: '굵게' },
+    { emo: '🎯', en: 'align', say: '얼라인', ko: '글씨 맞추기' },
+    { emo: '📍', en: 'goto', say: '고투', ko: '그 자리로 가' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.hideturtle()\nt.color("red")\nt.write("GAME OVER", align="center", font=("Arial", 40, "bold"))\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `게임이 끝나면 화면에 큰 글씨로 <b>GAME OVER</b> 가 나오죠? 🎮<br>오늘은 거북이가 <b>글씨를 쓰는</b> 방법을 배워요!`,
+      words: true,
+      done: '화면 한가운데에 큰 빨간 글씨! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '글씨 쓰기 ✍️',
+      talk: `<b>t.write("글자")</b> 는 거북이가 <b>서 있는 자리</b>에 글씨를 써요. 글자는 꼭 <b>"따옴표"</b> 안에 써요!`,
+      chips: [['t.write', '글씨 써'], ['("Hello!")', '쓸 글자']],
+      sentence: '🗣️ "거북아, Hello! 라고 써!"',
+      lines: [{ prep: true }, { type: 't.write("Hello!")', note: '글씨 쓰기' }],
+      done: '거북이 자리에 글씨가 써졌어요! ✍️',
+    },
+    {
+      title: '원하는 자리에 쓰기 📍',
+      talk: `글씨를 쓸 자리로 먼저 <b>점프</b>해요. 8차시에 배운 <b>goto</b> 예요.<br>빈칸의 숫자를 바꿔 글씨 위치를 바꿔 보세요! (왼쪽·아래는 마이너스)`,
+      lines: [
+        { prep: true }, { given: 't.penup()', note: '펜 들기 (선 안 그림)' },
+        { blank: 't.goto(@, @)', answers: [null, null], start: ['-100', '50'], note: '(가로, 세로) 자리로!' },
+        { given: 't.write("여기!")', note: '글씨 쓰기' },
+      ],
+      done: '내가 정한 자리에 글씨가 써졌어요! 📍',
+    },
+    {
+      title: '글씨 크게 만들기 🔠',
+      talk: `<b>font</b> 는 글씨의 <b>모양과 크기</b>를 정해요.<br><b>("Arial", 30, "bold")</b> = <b>(글씨체, 크기, 굵게)</b> 예요. 가운데 <b>크기 숫자</b>를 바꿔 보세요!`,
+      chips: [['font=', '글씨 모양은'], ['("Arial", 30, "bold")', '(글씨체, 크기 30, 굵게)']],
+      lines: [
+        { prep: true }, { given: 't.penup()', note: '펜 들기' }, { given: 't.goto(-100, 0)', note: '왼쪽으로' },
+        { blank: 't.write("BIG!", font=("Arial", @, "bold"))', answers: [null], start: ['30'], note: '크기 ?' },
+      ],
+      quick: ['15', '30', '60'],
+      done: '숫자가 크면 글씨도 커져요! 🔠',
+    },
+    {
+      title: '굵기 바꿔 보기 💪',
+      talk: `font 의 <b>맨 끝 글자</b>는 <b>굵기</b>예요.<br><b>"bold"</b> 는 굵게, <b>"normal"</b> 은 보통, <b>"italic"</b> 은 기울임이에요. 버튼으로 바꿔 보세요!`,
+      lines: [
+        { prep: true }, { given: 't.penup()', note: '펜 들기' }, { given: 't.goto(-100, 0)', note: '왼쪽으로' },
+        { blank: 't.write("Hello", font=("Arial", 40, "@"))', answers: ['*'], start: ['bold'], note: '굵기는?' },
+      ],
+      quick: ['normal', 'bold', 'italic'],
+      done: '글씨 모양이 바뀌었어요! 💪',
+    },
+    {
+      title: '도전! 가운데 맞추기 🎯',
+      talk: `글씨를 <b>화면 한가운데</b>에 딱 맞추고 싶어요. <b>align</b> 은 <b>글씨 맞추기</b>예요.<br><b>"left"</b> 는 왼쪽 맞춤, <b>"center"</b> 는 가운데 맞춤이에요. 빈칸에 <b>center</b> 를 써 보세요.`,
+      lines: [
+        { prep: true }, { given: 't.hideturtle()', note: '거북이 숨기기' }, { given: 't.color("red")', note: '빨간색' },
+        { blank: 't.write("GAME OVER", align="@", font=("Arial", 40, "bold"))', answers: ['center'], start: ['left'], note: '맞춤은?' },
+      ],
+      hint: '가운데는 영어로 <b>center</b> (센터) 예요!',
+      done: '<b>GAME OVER</b> 가 화면 한가운데에 딱! 🎮 게임 오버 화면 완성이에요!',
+    },
+    {
+      kind: 'free', title: '나만의 글씨 판 🎨',
+      talk: `글자, 크기, 색깔, 위치를 마음대로 바꿔 보세요!<br><span class="small">줄을 더 써서 여러 개의 글씨를 만들어 봐요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.hideturtle()\nt.penup()\n\nt.color("red")\nt.goto(0, 40)\nt.write("GAME OVER", align="center", font=("Arial", 40, "bold"))\n\nt.color("blue")\nt.goto(0, -20)\nt.write("Try again!", align="center", font=("Arial", 20, "normal"))\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

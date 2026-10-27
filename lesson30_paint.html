@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const LESSON = {
+  num: 30,
+  topic: '나만의 그림판',
+  words: [
+    { emo: '🖱️', en: 'ondrag', say: '온 드래그', ko: '끌고 다니면' },
+    { emo: '👆', en: 'onscreenclick', say: '온 스크린 클릭', ko: '화면을 클릭하면' },
+    { emo: '🧽', en: 'clear', say: '클리어', ko: '그림 지우기' },
+    { emo: '🎨', en: 'color', say: '컬러', ko: '색깔' },
+    { emo: '🖍️', en: 'pensize', say: '펜 사이즈', ko: '펜 굵기' },
+  ],
+  preview: `t = turtle.Turtle()\nt.shape("turtle")\nt.pensize(4)\nt.speed(0)\nt.color("blue")\nt.ondrag(t.goto)\ndef erase():\n    t.clear()\ndef red():\n    t.color("red")\ndef blue():\n    t.color("blue")\nturtle.onkey(erase, "c")\nturtle.onkey(red, "r")\nturtle.onkey(blue, "b")\nturtle.listen()\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `마지막 시간이에요! 🎉 마우스로 그림을 그리는 <b>나만의 그림판</b>을 만들어요.<br><span class="small">▶ 미리보기를 누른 뒤, <b>거북이를 꾹 누른 채</b> 마우스를 움직여 보세요. <b>r</b> 빨강, <b>b</b> 파랑, <b>c</b> 지우기!</span>`,
+      words: true,
+      done: '마우스로 그림을 그렸어요! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '끌고 다니며 그리기 🖱️',
+      talk: `<b>ondrag</b> 는 <b>"끌고 다니면 ~해!"</b> 예요. <b>t.ondrag(t.goto)</b> 는 <b>"거북이를 끌고 다니면, 끌고 가는 곳으로 가!"</b> 예요.<br>⚠️ 반드시 <b>거북이를 꾹 누른 채</b> 움직여야 해요! (고투 뒤에 괄호 ( ) 는 안 써요)`,
+      chips: [['t.ondrag', '거북이를 끌고 다니면'], ['(t.goto)', '끌고 가는 곳으로 가']],
+      lines: [{ prep: true }, { given: 't.pensize(4)', note: '펜 굵게' }, { given: 't.speed(0)', note: '가장 빠르게 (끌 때 잘 따라와요)' }, { type: 't.ondrag(t.goto)', note: '끌고 다니면 그리기!' }],
+      done: '▶ 실행한 뒤 <b>거북이를 꾹 누른 채</b> 마우스를 움직여 보세요! 🖱️ 선이 그려져요.',
+    },
+    {
+      title: '클릭하면 그리기 👆',
+      talk: `9차시에서 배운 <b>onscreenclick</b> 도 그림판이 돼요. 클릭할 때마다 <b>그 점까지 선</b>이 그어져요.<br>줄을 직접 써 보세요!`,
+      chips: [['turtle.onscreenclick', '화면을 클릭하면'], ['(t.goto)', '그곳으로 가']],
+      lines: [{ prep: true }, { given: 't.pensize(4)', note: '펜 굵게' }, { given: 't.speed(0)', note: '가장 빠르게 (끌 때 잘 따라와요)' }, { type: 'turtle.onscreenclick(t.goto)', note: '클릭하면 그리기!' }],
+      done: '▶ 실행한 뒤 <b>무대를 여기저기 클릭</b>해 보세요! 👆 점과 점이 선으로 이어져요.',
+    },
+    {
+      title: '지우개 키 🧽',
+      talk: `그림을 망쳤을 땐 <b>c</b> 키로 <b>싹 지워요</b>. 7차시에서 배운 거예요!<br>빈칸에 <b>지우기</b> 명령을 써 보세요.`,
+      lines: [
+        { prep: true }, { given: 't.pensize(4)', note: '펜 굵게' }, { given: 't.speed(0)', note: '가장 빠르게 (끌 때 잘 따라와요)' },
+        { given: 'def erase():', note: '"erase" 명령 만들기' },
+        { box: [{ blank: 't.@()', answers: ['clear'], note: '그림 지우기' }], label: '📦 erase 명령 상자 안' },
+        { given: 'turtle.onkey(erase, "c")', note: 'c 키 → 지우기' },
+        { given: 't.ondrag(t.goto)', note: '끌고 다니며 그리기' },
+        { given: 'turtle.listen()', note: '귀 열기' },
+      ],
+      hint: '글씨나 그림을 지우는 영어는 <b>clear</b> (클리어) 예요.',
+      done: '▶ 그림을 그린 뒤 <b>c</b> 키를 눌러 보세요! 🧽 싹 지워져요. (안 되면 무대를 한 번 클릭!)',
+    },
+    {
+      title: '색깔 바꾸는 키 🎨',
+      talk: `<b>r</b> 를 누르면 <b>빨강</b>, <b>b</b> 를 누르면 <b>파랑</b>! 빨강 명령의 색깔 빈칸을 채워 보세요.<br>다른 색 이름으로 바꿔도 돼요!`,
+      lines: [
+        { prep: true }, { given: 't.pensize(4)', note: '펜 굵게' }, { given: 't.speed(0)', note: '가장 빠르게 (끌 때 잘 따라와요)' },
+        { given: 'def color_one():', note: '"color_one" 명령' },
+        { box: [{ blank: 't.color("@")', answers: ['*'], start: ['red'], note: '무슨 색?' }] },
+        { given: 'def color_two():', note: '"color_two" 명령' },
+        { box: [{ given: 't.color("blue")', note: '파란색' }] },
+        { given: 'turtle.onkey(color_one, "r")', note: 'r 키 → 첫째 색' },
+        { given: 'turtle.onkey(color_two, "b")', note: 'b 키 → 파란색' },
+        { given: 't.ondrag(t.goto)', note: '끌고 다니며 그리기' },
+        { given: 'turtle.listen()', note: '귀 열기' },
+      ],
+      quick: ['red', 'orange', 'green', 'purple'],
+      done: '▶ <b>r</b> 와 <b>b</b> 로 색깔을 바꿔 가며 그려 보세요! 🌈',
+    },
+    {
+      title: '도전! 굵기 바꾸는 키 🖍️',
+      talk: `<b>s</b> 키를 누르면 선이 <b>굵어지게</b> 해 봐요. 2차시에서 배운 <b>pensize</b> 예요.<br>빈칸에 굵기 숫자를 써 보세요. (클수록 뚱뚱해요)`,
+      lines: [
+        { prep: true }, { given: 't.pensize(2)', note: '처음엔 가늘게' }, { given: 't.speed(0)', note: '가장 빠르게 (끌 때 잘 따라와요)' },
+        { given: 'def thick():', note: '"thick(굵게)" 명령' },
+        { box: [{ blank: 't.pensize(@)', answers: [null], start: ['12'], note: '굵기 ?' }] },
+        { given: 'turtle.onkey(thick, "s")', note: 's 키 → 굵게' },
+        { given: 't.ondrag(t.goto)', note: '끌고 다니며 그리기' },
+        { given: 'turtle.listen()', note: '귀 열기' },
+      ],
+      quick: ['6', '12', '25'],
+      done: '▶ 먼저 가늘게 그리고, <b>s</b> 키를 누른 뒤 다시 그려 보세요! 🖍️ 굵은 선이 나와요.',
+    },
+    {
+      kind: 'free', title: '나만의 그림판 완성 🎨',
+      talk: `<b>모든 걸 마음대로</b> 바꿔 보세요! 키 이름(<b>"r"</b> 등), 색깔, 굵기, 새 키를 만들어 보세요.<br><span class="small">🎉 30차시를 모두 끝냈어요! 여러분은 이제 코딩을 할 수 있어요. 나만의 작품을 친구에게 보여 주세요!</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.pensize(4)\nt.speed(0)\nt.color("blue")\nt.ondrag(t.goto)\n\ndef erase():\n    t.clear()\ndef red():\n    t.color("red")\ndef blue():\n    t.color("blue")\ndef green():\n    t.color("green")\ndef thick():\n    t.pensize(12)\ndef thin():\n    t.pensize(3)\n\nturtle.onkey(erase, "c")\nturtle.onkey(red, "r")\nturtle.onkey(blue, "b")\nturtle.onkey(green, "g")\nturtle.onkey(thick, "s")\nturtle.onkey(thin, "a")\nturtle.listen()\n`,
+      done: '🎉 30차시 모두 끝! 정말 대단해요! 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

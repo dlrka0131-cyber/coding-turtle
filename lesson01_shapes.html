@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const LESSON = {
+  num: 1,
+  topic: '도형 그리기',
+  words: [
+    { emo: '🐢', en: 'turtle', say: '터틀', ko: '거북이' },
+    { emo: '⬆️', en: 'forward', say: '포워드', ko: '앞으로 가' },
+    { emo: '↩️', en: 'left', say: '레프트', ko: '왼쪽으로 돌아' },
+    { emo: '↪️', en: 'right', say: '라이트', ko: '오른쪽으로 돌아' },
+    { emo: '🔁', en: 'for ... range(4)', say: '포 … 레인지', ko: '4번 반복해' },
+    { emo: '⭕', en: 'circle', say: '서클', ko: '동그라미' },
+    { emo: '🎨', en: 'color', say: '컬러', ko: '색깔' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.color("gold")\nt.speed(5)\nfor i in range(5):\n    t.forward(150)\n    t.left(144)\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `오늘은 <b>거북이에게 말을 걸어서</b> 그림을 그려요.<br>거북이는 <b>영어 단어</b>만 알아들어요. 그래서 아래 단어 몇 개만 알면 돼요!`,
+      words: true,
+      done: '멋지죠? 오늘 끝나면 여러분도 이걸 그릴 수 있어요! <b>다음 →</b>을 눌러요.',
+    },
+    {
+      title: '거북이 데려오기 🐢',
+      talk: `거북이를 무대에 데려오는 <b>주문 3줄</b>이에요.<br>이 3줄은 <b>매번 맨 위에 똑같이</b> 있어요. 외우지 않아도 괜찮아요!<br><span class="small">지금은 그냥 ▶ 실행하기만 눌러 보세요.</span>`,
+      lines: [
+        { given: 'import turtle', note: '거북이 상자 열기' },
+        { given: 't = turtle.Turtle()', note: '내 거북이 t 만들기' },
+        { given: 't.shape("turtle")', note: '거북이 모양으로' },
+      ],
+      done: '거북이가 나타났어요! 🎉 이제 거북이에게 말을 걸어 볼까요?',
+    },
+    {
+      title: '앞으로 가! ⬆️',
+      talk: `거북이에게 <b>"앞으로 100만큼 가!"</b> 라고 말해 봐요.`,
+      chips: [['t', '내 거북이'], ['.', '~야,'], ['forward', '앞으로 가'], ['(100)', '100만큼']],
+      sentence: '🗣️ "거북아, 앞으로 100만큼 가!"',
+      lines: [{ prep: true }, { type: 't.forward(100)', note: '앞으로 100' }],
+      done: '거북이가 걸어가면서 선을 그렸어요! 👏',
+    },
+    {
+      title: '숫자 바꿔 보기 🔢',
+      talk: `괄호 <b>( )</b> 안의 숫자는 <b>얼마나 멀리</b> 갈지예요.<br>숫자를 바꾸고 실행해 보세요. 버튼을 눌러도 돼요!`,
+      lines: [{ prep: true }, { blank: 't.forward(@)', answers: [null], start: ['200'], note: '앞으로 ? 만큼' }],
+      quick: ['30', '100', '250'],
+      done: '숫자가 크면 멀리, 작으면 조금 가요! 👍',
+    },
+    {
+      title: '돌아! ↩️',
+      talk: `이번엔 거북이를 <b>왼쪽으로 돌려</b> 봐요.<br><b>90</b>은 <b>ㄱ자처럼 꺾이는 만큼</b> 도는 거예요.`,
+      chips: [['t', '내 거북이'], ['.', '~야,'], ['left', '왼쪽으로 돌아'], ['(90)', 'ㄱ자 만큼']],
+      sentence: '🗣️ "거북아, 왼쪽으로 90만큼 돌아!"',
+      lines: [{ prep: true }, { given: 't.forward(100)', note: '앞으로 100' }, { type: 't.left(90)', note: '왼쪽으로 돌기' }],
+      done: '선 끝에서 거북이가 위쪽을 보고 있죠? 왼쪽으로 돈 거예요! 🔄',
+    },
+    {
+      kind: 'more', title: '네모 만들기 ⬜',
+      talk: `<b>앞으로 가기 + 돌기</b>를 또 하면 어떻게 될까요?<br><b>➕ 한 번 더!</b> 버튼을 눌러서 네모를 완성해 보세요.`,
+      pair: [{ given: 't.forward(100)', note: '앞으로 100' }, { given: 't.left(90)', note: '왼쪽으로 돌기' }],
+      need: 4,
+      done: '네모 완성! 🎉<br>그런데… 똑같은 2줄을 <b>4번이나</b> 썼어요. 너무 길죠? 😵<br>거북이에게 <b>"이거 4번 해 줘!"</b> 하고 한 번에 말하는 방법이 있어요!',
+    },
+    {
+      title: '"4번 해 줘!" 주문 🔁',
+      talk: `<b>for i in range(4):</b> 는 <b>"아래 상자 안의 일을 4번 해 줘!"</b> 라는 주문이에요.<br>노란 상자 안의 2줄이 <b>4번 반복</b>돼요.`,
+      chips: [['for i in range(4)', '4번 반복해'], [':', '상자 시작!']],
+      sentence: '💡 i 는 신경 쓰지 마세요. 그냥 주문의 한 부분이에요!',
+      lines: [
+        { prep: true },
+        { type: 'for i in range(4):', note: '4번 해 줘!' },
+        { box: [{ given: 't.forward(100)', note: '앞으로 100' }, { given: 't.left(90)', note: '왼쪽으로 돌기' }] },
+      ],
+      done: '8줄이 3줄로 줄었어요! 똑같은 네모가 나왔죠? 이게 바로 <b>반복</b>이에요! 🪄',
+    },
+    {
+      title: '도전! 세모 만들기 🔺',
+      talk: `빈칸 2개만 채우면 돼요!<br>세모는 <b>변이 3개</b> → <b>3번</b> 반복해요.`,
+      lines: [
+        { prep: true },
+        { given: 't.color("blue")', note: '파란색 펜' },
+        { blank: 'for i in range(@):', answers: ['3'], note: '몇 번?' },
+        { box: [{ given: 't.forward(100)', note: '앞으로 100' }, { blank: 't.left(@)', answers: ['120'], note: '얼마나 돌까?' }] },
+      ],
+      hint: '세모는 <b>3</b>번, 도는 숫자는 <b>120</b>이에요. <br><span class="small">(빙글 한 바퀴 360 ÷ 3 = 120)</span>',
+      done: '세모 완성! 🔺 정말 잘했어요!',
+    },
+    {
+      title: '도전! 별 만들기 ⭐',
+      talk: `이번엔 반짝반짝 별!<br>별은 뾰족한 끝이 <b>5개</b> → <b>5번</b> 반복해요.`,
+      lines: [
+        { prep: true },
+        { given: 't.color("gold")', note: '금색 펜' },
+        { blank: 'for i in range(@):', answers: ['5'], note: '몇 번?' },
+        { box: [{ given: 't.forward(150)', note: '앞으로 150' }, { blank: 't.left(@)', answers: ['144'], note: '얼마나 돌까?' }] },
+      ],
+      hint: '별은 <b>5</b>번, 도는 숫자는 <b>144</b>예요. <br><span class="small">(별은 아주 많이 꺾여야 해서 큰 숫자예요!)</span>',
+      done: '반짝반짝 별 완성! ⭐ 맨 처음에 본 그 별이에요!',
+    },
+    {
+      title: '도전! 육각형 만들기 ⬡',
+      talk: `벌집 모양 육각형!<br>육각형은 <b>변이 6개</b> → <b>6번</b> 반복해요.`,
+      lines: [
+        { prep: true },
+        { given: 't.color("purple")', note: '보라색 펜' },
+        { blank: 'for i in range(@):', answers: ['6'], note: '몇 번?' },
+        { box: [{ given: 't.forward(100)', note: '앞으로 100' }, { blank: 't.left(@)', answers: ['60'], note: '얼마나 돌까?' }] },
+      ],
+      hint: '육각형은 <b>6</b>번, 도는 숫자는 <b>60</b>이에요. <br><span class="small">(360 ÷ 6 = 60)</span>',
+      done: '육각형 완성! ⬡ 벌집 같아요! 🐝',
+    },
+    {
+      title: '보너스! 동그라미 ⭕',
+      talk: `동그라미는 반복 없이 <b>한 줄</b>이면 돼요!<br>괄호 안 숫자가 크면 <b>큰 동그라미</b>가 돼요.`,
+      chips: [['t', '내 거북이'], ['.', '~야,'], ['circle', '동그라미 그려'], ['(80)', '80 크기로']],
+      lines: [{ prep: true }, { given: 't.color("red")', note: '빨간색 펜' }, { type: 't.circle(80)', note: '동그라미 80' }],
+      done: '동그라미 완성! ⭕',
+    },
+    {
+      kind: 'free', title: '마음대로 그리기 🎨',
+      talk: `이제 여러분 차례! 아래 코드의 <b>숫자</b>와 <b>색깔 단어</b>를 마음대로 바꿔 보세요.<br><span class="small">색깔은 영어로 써요. "따옴표" 안에 넣어야 해요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\n\nt.color("pink")\nfor i in range(5):\n    t.forward(150)\n    t.left(144)\n\nt.color("blue")\nt.circle(60)\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

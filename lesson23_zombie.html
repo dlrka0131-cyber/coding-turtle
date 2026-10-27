@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>23차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+// ===== 게임 차시 공통 부품 (build.py 가 //@@COMMON 자리에 붙여 넣는다) =====
+// 빨간 경기장 (가로 -150~150, 세로 -100~100)
+const ARENA = { fold: [
+  { given: 'w = turtle.Turtle()', note: '경기장 그릴 거북이 w' },
+  { given: 'w.hideturtle()', note: '거북이 숨기기' },
+  { given: 'w.speed(0)', note: '가장 빠르게' },
+  { given: 'w.color("red")', note: '빨간색' },
+  { given: 'w.pensize(4)', note: '굵게' },
+  { given: 'w.penup()', note: '펜 들기' },
+  { given: 'w.goto(-150, -100)', note: '왼쪽 아래 모서리로' },
+  { given: 'w.pendown()', note: '펜 내리기' },
+  { given: 'for side in range(2):', note: '2번 해 줘!' },
+  { box: [{ given: 'w.forward(300)', note: '가로 벽' }, { given: 'w.left(90)', note: '돌기' }, { given: 'w.forward(200)', note: '세로 벽' }, { given: 'w.left(90)', note: '돌기' }] },
+], title: '빨간 경기장 그리기 (신경 쓰지 마세요)' };
+const ARENA_PY = 'w = turtle.Turtle()\nw.hideturtle()\nw.speed(0)\nw.color("red")\nw.pensize(4)\nw.penup()\nw.goto(-150, -100)\nw.pendown()\nfor side in range(2):\n    w.forward(300)\n    w.left(90)\n    w.forward(200)\n    w.left(90)\n';
+
+// 방향키 4개 (6차시에서 만든 것). after 를 주면 매번 그 줄도 실행한다. player 는 움직일 거북이 이름.
+const DIRS = [['up', 90, 'Up', '위'], ['down', 270, 'Down', '아래'], ['left', 180, 'Left', '왼쪽'], ['right', 0, 'Right', '오른쪽']];
+const KEYS = (after, listen = true, player = 't') => {
+  const out = [];
+  DIRS.forEach(([n, a, k, ko]) => {
+    out.push({ given: `def go_${n}():`, note: `${ko}으로` });
+    const body = [{ given: `${player}.setheading(${a})`, note: `${ko}쪽을 봐` }, { given: `${player}.forward(20)`, note: '앞으로 20' }];
+    if (after) body.push(after);
+    out.push({ box: body });
+  });
+  DIRS.forEach(([n, a, k, ko]) => out.push({ given: `turtle.onkey(go_${n}, "${k}")`, note: `${ko} 화살표 키` }));
+  if (listen) out.push({ given: 'turtle.listen()', note: '귀 열기' });
+  return { fold: out, title: '방향키 코드 20줄 (6차시에서 만든 것)' };
+};
+const keysPy = (after = '', listen = true, player = 't') => {
+  let s = '';
+  DIRS.forEach(([n, a]) => { s += `def go_${n}():\n    ${player}.setheading(${a})\n    ${player}.forward(20)\n` + (after ? `    ${after}\n` : ''); });
+  DIRS.forEach(([n, a, k]) => { s += `turtle.onkey(go_${n}, "${k}")\n`; });
+  return s + (listen ? 'turtle.listen()\n' : '');
+};
+
+// 코인 / 좀비 / 점수판
+const COIN = { fold: [
+  { given: 'coin = turtle.Turtle()', note: '코인 만들기' },
+  { given: 'coin.shape("circle")', note: '동그라미 모양' },
+  { given: 'coin.color("gold")', note: '금색' },
+  { given: 'coin.penup()', note: '펜 들기' },
+  { given: 'coin.goto(100, 0)', note: '코인 놓을 자리' },
+], title: '코인 만들기 5줄 (이미 써 있어요)' };
+const COIN_PY = 'coin = turtle.Turtle()\ncoin.shape("circle")\ncoin.color("gold")\ncoin.penup()\ncoin.goto(100, 0)\n';
+const ENEMY = (x, y, fold = true) => {
+  const lines = [
+    { given: 'enemy = turtle.Turtle()', note: '좀비 만들기' },
+    { given: 'enemy.shape("turtle")', note: '거북이 모양' },
+    { given: 'enemy.color("green")', note: '초록색 좀비' },
+    { given: 'enemy.penup()', note: '펜 들기' },
+    { given: `enemy.goto(${x}, ${y})`, note: '좀비 놓을 자리' },
+  ];
+  return fold ? { fold: lines, title: '좀비 만들기 5줄 (이미 써 있어요)' } : lines;
+};
+const ENEMY_PY = (x, y) => `enemy = turtle.Turtle()\nenemy.shape("turtle")\nenemy.color("green")\nenemy.penup()\nenemy.goto(${x}, ${y})\n`;
+const BOARD = { fold: [
+  { given: 'board = turtle.Turtle()', note: '점수판 거북이 board' },
+  { given: 'board.hideturtle()', note: '숨기기' },
+  { given: 'board.penup()', note: '펜 들기' },
+  { given: 'board.goto(-140, 105)', note: '왼쪽 위로' },
+  { given: 'board.write("Score: 0", font=("Arial", 18, "bold"))', note: '처음 점수판' },
+], title: '점수판 만들기 5줄 (이미 써 있어요)' };
+const BOARD_PY = 'board = turtle.Turtle()\nboard.hideturtle()\nboard.penup()\nboard.goto(-140, 105)\nboard.write("Score: 0", font=("Arial", 18, "bold"))\n';
+
+// 뱀
+const SNAKE = { fold: [
+  { given: 'snakes = []', note: '뱀 기차 (빈 목록)' },
+  { given: 'for i in range(5):', note: '5칸 만들기!' },
+  { box: [
+    { given: 'body = turtle.Turtle()', note: '몸통 만들기' },
+    { given: 'body.shape("square")', note: '네모 모양' },
+    { given: 'body.color("green")', note: '초록색' },
+    { given: 'body.penup()', note: '펜 들기' },
+    { given: 'body.goto(-120 - 20 * i, 0)', note: 'i번째 칸 자리' },
+    { given: 'snakes.append(body)', note: '기차에 붙이기' },
+  ] },
+  { given: 'snakes[0].color("darkgreen")', note: '머리는 진한 초록' },
+], title: '뱀 몸통 만들기 (25차시에서 만든 것)' };
+const SNAKE_PY = 'snakes = []\nfor i in range(5):\n    body = turtle.Turtle()\n    body.shape("square")\n    body.color("green")\n    body.penup()\n    body.goto(-120 - 20 * i, 0)\n    snakes.append(body)\nsnakes[0].color("darkgreen")\n';
+const FOLLOW = [
+  { given: 'for i in range(len(snakes) - 1, 0, -1):', note: '꼬리부터 앞으로' },
+  { box: [{ given: 'snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())', note: '앞 칸 자리로' }] },
+];
+const FOLLOW_PY = '    for i in range(len(snakes) - 1, 0, -1):\n        snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())\n';
+// 뱀 방향키 (반대 방향으로는 못 돌게 막는 if 포함)
+const STEER_DIRS = [['up', 90, 270, 'Up', '위'], ['down', 270, 90, 'Down', '아래'], ['left', 180, 0, 'Left', '왼쪽'], ['right', 0, 180, 'Right', '오른쪽']];
+const STEER = (() => {
+  const out = [];
+  STEER_DIRS.forEach(([n, a, bad, k, ko]) => {
+    out.push({ given: `def go_${n}():`, note: `${ko}으로` });
+    out.push({ box: [{ given: `if snakes[0].heading() != ${bad}:`, note: '반대 방향이 아니면' }, { box: [{ given: `snakes[0].setheading(${a})`, note: `${ko}쪽을 봐` }] }] });
+  });
+  STEER_DIRS.forEach(([n, a, bad, k, ko]) => out.push({ given: `turtle.onkey(go_${n}, "${k}")`, note: `${ko} 화살표 키` }));
+  out.push({ given: 'turtle.listen()', note: '귀 열기' });
+  return { fold: out, title: '방향키 코드 (27차시에서 만든 것)' };
+})();
+const STEER_PY = STEER_DIRS.map(([n, a, bad]) => `def go_${n}():\n    if snakes[0].heading() != ${bad}:\n        snakes[0].setheading(${a})\n`).join('') + STEER_DIRS.map(([n, a, bad, k]) => `turtle.onkey(go_${n}, "${k}")\n`).join('') + 'turtle.listen()\n';
+
+const FACE = { given: 'enemy.setheading(enemy.towards(t))', note: '나(t)를 쳐다봐!' };
+const CHASE_DEF = (speedLine) => [
+  { given: 'def chase():', note: '"chase(쫓아가기)" 명령 만들기' },
+  { box: [
+    FACE,
+    speedLine,
+    { type: 'turtle.ontimer(chase, 100)', note: '0.1초 뒤에 chase 또 해!' },
+  ], label: '📦 chase 명령 상자 안' },
+];
+const LESSON = {
+  num: 23,
+  topic: '나를 쫓아오는 좀비',
+  words: [
+    { emo: '🧟', en: 'enemy', say: '에너미', ko: '좀비 (적)' },
+    { emo: '👀', en: 'towards', say: '토워즈', ko: '~쪽을 쳐다봐' },
+    { emo: '⏱️', en: 'ontimer', say: '온 타이머', ko: '시간이 지나면 ~해' },
+    { emo: '🔁', en: 'chase', say: '체이스', ko: '쫓아가기' },
+    { emo: '⬆️', en: 'forward', say: '포워드', ko: '앞으로 가' },
+  ],
+  preview: `t = turtle.Turtle()\nt.shape("turtle")\nt.penup()\nt.color("blue")\n${ENEMY_PY(100, 60)}def chase():\n    enemy.setheading(enemy.towards(t))\n    enemy.forward(5)\n    turtle.ontimer(chase, 100)\n${keysPy()}chase()\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `초록색 <b>좀비</b> 🧟 가 파란 거북이를 <b>졸졸 쫓아와요!</b><br><span class="small">▶ 미리보기를 누르고 <b>방향키</b>로 도망쳐 보세요.</span>`,
+      words: true,
+      done: '좀비가 계속 쫓아오죠? 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '쳐다보기 👀',
+      talk: `좀비가 쫓아오려면 먼저 거북이(t)가 <b>있는 쪽을 쳐다봐야</b> 해요.<br><b>enemy.towards(t)</b> 는 <b>"t 가 있는 방향"</b> 이에요. 이 방향으로 몸을 돌리는 줄을 써 보세요!`,
+      chips: [['enemy.setheading', '좀비야, 이 방향을 봐'], ['(enemy.towards(t))', 't 가 있는 방향']],
+      sentence: '🗣️ "좀비야, 거북이 t 가 있는 쪽을 쳐다봐!"',
+      lines: [
+        { prep: true }, { given: 't.penup()', note: '펜 들기' }, { given: 't.color("blue")', note: '파란색' },
+        ENEMY(100, 60),
+        { type: 'enemy.setheading(enemy.towards(t))', note: '나를 쳐다봐!' },
+        { given: 'enemy.forward(50)', note: '앞으로 50' },
+      ],
+      done: '좀비가 거북이 쪽으로 다가왔어요! 🧟',
+    },
+    {
+      title: '조금씩 계속 다가가기 🔁',
+      talk: `한 번에 50칸이 아니라, <b>조금씩 계속</b> 쫓아가요. <b>쳐다보기 + 앞으로 10</b>을 반복해요.<br>반복 횟수를 바꿔 보세요! 버튼을 눌러도 돼요.`,
+      lines: [
+        { prep: true }, { given: 't.penup()', note: '펜 들기' }, { given: 't.color("blue")', note: '파란색' },
+        ENEMY(100, 60),
+        { blank: 'for i in range(@):', answers: [null], start: ['5'], note: '몇 번 해 줘?' },
+        { box: [FACE, { given: 'enemy.forward(10)', note: '앞으로 10' }] },
+      ],
+      quick: ['3', '8', '15'],
+      done: '횟수가 많을수록 좀비가 거북이에 가까워져요! 그런데 이건 거북이가 <b>멈춰 있을 때</b>만 쓸 수 있어요. 😕',
+    },
+    {
+      title: '타이머로 계속 쫓아오기 ⏱️',
+      talk: `<b>ontimer</b> 는 <b>"시간이 지나면 이 명령을 해!"</b> 예요. <b>turtle.ontimer(chase, 100)</b> = <b>"0.1초 뒤에 chase 를 또 해!"</b><br>chase 명령 안에서 chase 를 다시 부르게 하면 <b>계속 반복</b>돼요. 노란 줄을 직접 써 보세요!`,
+      chips: [['turtle.ontimer', '시간이 지나면'], ['(chase, 100)', 'chase 명령을, 0.1초 뒤에']],
+      sentence: '💡 100 은 0.1초예요. 1000 이면 1초!',
+      lines: [
+        { prep: true }, { given: 't.penup()', note: '펜 들기' }, { given: 't.color("blue")', note: '파란색' },
+        ENEMY(100, 60),
+        ...CHASE_DEF({ given: 'enemy.forward(5)', note: '앞으로 5' }),
+        { given: 'chase()', note: '쫓아가기 시작!' },
+      ],
+      done: '좀비가 쉬지 않고 쫓아와요! 🧟💨 (다시 ▶ 하면 처음부터 새로 시작해요)',
+    },
+    {
+      title: '도전! 방향키로 도망가기 🏃',
+      talk: `이제 <b>방향키</b>로 도망쳐요! 방향키 코드는 6차시에서 만든 거예요. 마지막에 <b>귀 열기</b>가 필요해요. 빈칸에 <b>listen</b> 을 써 보세요.`,
+      lines: [
+        { prep: true }, { given: 't.penup()', note: '펜 들기' }, { given: 't.color("blue")', note: '파란색' },
+        ENEMY(100, 60),
+        ...CHASE_DEF({ given: 'enemy.forward(5)', note: '앞으로 5' }),
+        KEYS(null, false),
+        { blank: 'turtle.@()', answers: ['listen'], note: '귀 열기!' },
+        { given: 'chase()', note: '쫓아가기 시작!' },
+      ],
+      hint: '귀를 여는 영어는 <b>listen</b> (리슨) 이에요.',
+      done: '▶ 실행한 뒤 <b>방향키</b>로 도망쳐 보세요! 🏃 좀비가 쫓아와요.<br><span class="small">(안 움직이면 거북이 무대를 한 번 클릭하고 눌러 보세요)</span>',
+    },
+    {
+      title: '도전! 좀비 속도 바꾸기 ⚡',
+      talk: `좀비가 한 번에 가는 칸(<b>forward 숫자</b>)이 클수록 <b>빨라요</b>. 너무 빠르면 못 도망가고, 너무 느리면 재미없죠!<br>숫자를 바꿔 가며 도망쳐 보세요. 버튼을 눌러도 돼요.`,
+      lines: [
+        { prep: true }, { given: 't.penup()', note: '펜 들기' }, { given: 't.color("blue")', note: '파란색' },
+        ENEMY(100, 60),
+        ...CHASE_DEF({ blank: 'enemy.forward(@)', answers: [null], start: ['5'], note: '좀비 속도' }),
+        KEYS(null, true),
+        { given: 'chase()', note: '쫓아가기 시작!' },
+      ],
+      quick: ['2', '5', '9'],
+      done: '속도에 따라 게임이 쉬워지고 어려워져요! ⚡ 방향키로 도망쳐 보세요.',
+    },
+    {
+      kind: 'free', colors: false, title: '나만의 좀비 게임 🎨',
+      talk: `좀비 속도, 색깔, 타이머 시간(<b>100</b>)을 바꿔 보세요!<br><span class="small">좀비 모양을 "circle" 이나 "square" 로 바꿔도 재미있어요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.penup()\nt.color("blue")\n${ENEMY_PY(100, 60)}def chase():\n    enemy.setheading(enemy.towards(t))\n    enemy.forward(5)\n    turtle.ontimer(chase, 100)\n${keysPy()}chase()\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

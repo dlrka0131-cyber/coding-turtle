@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+// square 명령 상자 (반복 상자가 안에 들어 있다)
+const SQUARE_BODY = (size = '100') => [
+  { given: 'for i in range(4):', note: '4번 해 줘!' },
+  { box: [{ given: `t.forward(${size})`, note: `앞으로 ${size}` }, { given: 't.left(90)', note: '왼쪽으로 돌기' }] },
+];
+const DEF = { given: 'def square():', note: '"square" 명령 만들기' };
+const BOX = (body = SQUARE_BODY()) => ({ box: body, label: '📦 square 명령 상자 안' });
+const JUMP = [
+  { given: 't.penup()', note: '펜 들기' },
+  { given: 't.forward(150)', note: '옆으로 점프' },
+  { given: 't.pendown()', note: '펜 내리기' },
+];
+const LESSON = {
+  num: 4,
+  topic: '나만의 명령 만들기',
+  words: [
+    { emo: '📦', en: 'def', say: '데프', ko: '새 명령 만들기' },
+    { emo: '⬜', en: 'square', say: '스퀘어', ko: '네모' },
+    { emo: '▶️', en: 'square()', say: '스퀘어', ko: '네모 명령 실행!' },
+    { emo: '🔺', en: 'triangle', say: '트라이앵글', ko: '세모' },
+    { emo: '⬆️', en: 'penup', say: '펜 업', ko: '펜 들기' },
+  ],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.speed(6)\nt.color("blue")\ndef square():\n    for i in range(4):\n        t.forward(80)\n        t.left(90)\nt.penup()\nt.goto(-220, 0)\nt.pendown()\nfor k in range(3):\n    square()\n    t.penup()\n    t.forward(150)\n    t.pendown()\n`,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `거북이는 <b>"네모"</b> 라는 말을 몰라요. 매번 앞으로·돌기를 4번 말해야 하죠.<br>오늘은 거북이에게 <b>square(네모)</b> 라는 <b>새 명령</b>을 가르쳐 줄 거예요!`,
+      words: true,
+      done: '네모 3개를 <b>square()</b> 한 줄씩으로 그렸어요! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '새 명령 가르치기 📦',
+      talk: `<b>def</b> 는 <b>"새 명령을 만들게!"</b> 라는 뜻이에요.<br>노란 상자 안에 <b>네모 그리는 방법</b>을 넣어 두었어요. ▶ 실행해 보세요.`,
+      chips: [['def', '새 명령 만들게'], ['square', '명령 이름'], ['():', '상자 시작!']],
+      lines: [{ prep: true }, DEF, BOX()],
+      done: '어? <b>아무것도 안 그려졌죠?</b> 🤔<br>거북이에게 네모 그리는 법을 <b>가르쳐 주기만</b> 했기 때문이에요. 이제 "해 봐!" 하고 불러야 해요.',
+    },
+    {
+      title: '명령 부르기 ▶️',
+      talk: `상자 <b>밖</b>에 명령 이름을 쓰면 거북이가 그 명령을 <b>실행</b>해요.<br>괄호 <b>()</b> 는 <b>"지금 해!"</b> 라는 뜻이에요.`,
+      chips: [['square', '네모 명령'], ['()', '지금 해!']],
+      sentence: '🗣️ "거북아, 네모 그려!"',
+      lines: [{ prep: true }, DEF, BOX(), { type: 'square()', note: '네모 명령 실행!' }],
+      done: '네모가 나왔어요! ⬜ 한 줄로 네모를 그렸어요!',
+    },
+    {
+      title: '두 번 부르기 ⬜⬜',
+      talk: `한 번 만든 명령은 <b>몇 번이든</b> 부를 수 있어요.<br>펜을 들고 점프한 다음, 빈칸에 <b>square</b> 를 써서 한 번 더 불러 보세요.`,
+      lines: [{ prep: true }, DEF, BOX(), { given: 'square()', note: '네모 1' }, ...JUMP, { blank: '@()', answers: ['square'], note: '네모 2' }],
+      hint: '빈칸에 명령 이름 <b>square</b> 를 써요. 뒤에 괄호 () 는 이미 있어요.',
+      done: '네모가 2개! ⬜⬜ 네모 그리는 4줄을 또 쓸 필요가 없었죠?',
+    },
+    {
+      title: '상자 안만 고치기 ✏️',
+      talk: `명령 <b>상자 안</b>의 숫자를 바꾸면 어떻게 될까요?<br>빈칸에 숫자를 넣고 실행해 보세요. 버튼을 눌러도 돼요!`,
+      lines: [
+        { prep: true }, DEF,
+        BOX([
+          { given: 'for i in range(4):', note: '4번 해 줘!' },
+          { box: [{ blank: 't.forward(@)', answers: [null], start: ['50'], note: '앞으로 ?' }, { given: 't.left(90)', note: '왼쪽으로 돌기' }] },
+        ]),
+        { given: 'square()', note: '네모 1' }, ...JUMP, { given: 'square()', note: '네모 2' },
+      ],
+      quick: ['30', '50', '120'],
+      done: '상자 안 숫자 <b>하나</b>만 바꿨는데 네모 <b>2개가 모두</b> 바뀌었어요! 이게 명령 만들기의 힘이에요 💪',
+    },
+    {
+      title: '도전! 세모 명령 만들기 🔺',
+      talk: `이번엔 <b>triangle(세모)</b> 명령을 만들어요.<br>빈칸 2개를 채워 보세요. 하나는 <b>명령 만들기</b>, 하나는 <b>명령 부르기</b>예요!`,
+      lines: [
+        { prep: true },
+        { blank: '@ triangle():', answers: ['def'], note: '"triangle" 명령 만들기' },
+        { box: [
+          { given: 'for i in range(3):', note: '3번 해 줘!' },
+          { box: [{ given: 't.forward(100)', note: '앞으로 100' }, { given: 't.left(120)', note: '세모 각도로 돌기' }] },
+        ], label: '📦 triangle 명령 상자 안' },
+        { blank: '@()', answers: ['triangle'], note: '세모 명령 실행!' },
+      ],
+      hint: '위 빈칸은 새 명령을 만드는 <b>def</b>, 아래 빈칸은 명령 이름 <b>triangle</b> 이에요.',
+      done: '세모 명령 완성! 🔺 이제 거북이는 triangle 이라는 말도 알아요!',
+    },
+    {
+      kind: 'free', title: '나만의 명령 🎨',
+      talk: `square 와 triangle 을 마음대로 불러서 그림을 만들어 보세요!<br><span class="small">아래쪽 square() / triangle() 줄을 더 쓰거나 지워 보세요. 명령 상자 안 숫자도 바꿔 봐요.</span>`,
+      code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\n\ndef square():\n    for i in range(4):\n        t.forward(80)\n        t.left(90)\n\ndef triangle():\n    for i in range(3):\n        t.forward(80)\n        t.left(120)\n\nt.color("blue")\nsquare()\nt.color("red")\ntriangle()\n`,
+      done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

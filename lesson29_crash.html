@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>29차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+// ===== 게임 차시 공통 부품 (build.py 가 //@@COMMON 자리에 붙여 넣는다) =====
+// 빨간 경기장 (가로 -150~150, 세로 -100~100)
+const ARENA = { fold: [
+  { given: 'w = turtle.Turtle()', note: '경기장 그릴 거북이 w' },
+  { given: 'w.hideturtle()', note: '거북이 숨기기' },
+  { given: 'w.speed(0)', note: '가장 빠르게' },
+  { given: 'w.color("red")', note: '빨간색' },
+  { given: 'w.pensize(4)', note: '굵게' },
+  { given: 'w.penup()', note: '펜 들기' },
+  { given: 'w.goto(-150, -100)', note: '왼쪽 아래 모서리로' },
+  { given: 'w.pendown()', note: '펜 내리기' },
+  { given: 'for side in range(2):', note: '2번 해 줘!' },
+  { box: [{ given: 'w.forward(300)', note: '가로 벽' }, { given: 'w.left(90)', note: '돌기' }, { given: 'w.forward(200)', note: '세로 벽' }, { given: 'w.left(90)', note: '돌기' }] },
+], title: '빨간 경기장 그리기 (신경 쓰지 마세요)' };
+const ARENA_PY = 'w = turtle.Turtle()\nw.hideturtle()\nw.speed(0)\nw.color("red")\nw.pensize(4)\nw.penup()\nw.goto(-150, -100)\nw.pendown()\nfor side in range(2):\n    w.forward(300)\n    w.left(90)\n    w.forward(200)\n    w.left(90)\n';
+
+// 방향키 4개 (6차시에서 만든 것). after 를 주면 매번 그 줄도 실행한다. player 는 움직일 거북이 이름.
+const DIRS = [['up', 90, 'Up', '위'], ['down', 270, 'Down', '아래'], ['left', 180, 'Left', '왼쪽'], ['right', 0, 'Right', '오른쪽']];
+const KEYS = (after, listen = true, player = 't') => {
+  const out = [];
+  DIRS.forEach(([n, a, k, ko]) => {
+    out.push({ given: `def go_${n}():`, note: `${ko}으로` });
+    const body = [{ given: `${player}.setheading(${a})`, note: `${ko}쪽을 봐` }, { given: `${player}.forward(20)`, note: '앞으로 20' }];
+    if (after) body.push(after);
+    out.push({ box: body });
+  });
+  DIRS.forEach(([n, a, k, ko]) => out.push({ given: `turtle.onkey(go_${n}, "${k}")`, note: `${ko} 화살표 키` }));
+  if (listen) out.push({ given: 'turtle.listen()', note: '귀 열기' });
+  return { fold: out, title: '방향키 코드 20줄 (6차시에서 만든 것)' };
+};
+const keysPy = (after = '', listen = true, player = 't') => {
+  let s = '';
+  DIRS.forEach(([n, a]) => { s += `def go_${n}():\n    ${player}.setheading(${a})\n    ${player}.forward(20)\n` + (after ? `    ${after}\n` : ''); });
+  DIRS.forEach(([n, a, k]) => { s += `turtle.onkey(go_${n}, "${k}")\n`; });
+  return s + (listen ? 'turtle.listen()\n' : '');
+};
+
+// 코인 / 좀비 / 점수판
+const COIN = { fold: [
+  { given: 'coin = turtle.Turtle()', note: '코인 만들기' },
+  { given: 'coin.shape("circle")', note: '동그라미 모양' },
+  { given: 'coin.color("gold")', note: '금색' },
+  { given: 'coin.penup()', note: '펜 들기' },
+  { given: 'coin.goto(100, 0)', note: '코인 놓을 자리' },
+], title: '코인 만들기 5줄 (이미 써 있어요)' };
+const COIN_PY = 'coin = turtle.Turtle()\ncoin.shape("circle")\ncoin.color("gold")\ncoin.penup()\ncoin.goto(100, 0)\n';
+const ENEMY = (x, y, fold = true) => {
+  const lines = [
+    { given: 'enemy = turtle.Turtle()', note: '좀비 만들기' },
+    { given: 'enemy.shape("turtle")', note: '거북이 모양' },
+    { given: 'enemy.color("green")', note: '초록색 좀비' },
+    { given: 'enemy.penup()', note: '펜 들기' },
+    { given: `enemy.goto(${x}, ${y})`, note: '좀비 놓을 자리' },
+  ];
+  return fold ? { fold: lines, title: '좀비 만들기 5줄 (이미 써 있어요)' } : lines;
+};
+const ENEMY_PY = (x, y) => `enemy = turtle.Turtle()\nenemy.shape("turtle")\nenemy.color("green")\nenemy.penup()\nenemy.goto(${x}, ${y})\n`;
+const BOARD = { fold: [
+  { given: 'board = turtle.Turtle()', note: '점수판 거북이 board' },
+  { given: 'board.hideturtle()', note: '숨기기' },
+  { given: 'board.penup()', note: '펜 들기' },
+  { given: 'board.goto(-140, 105)', note: '왼쪽 위로' },
+  { given: 'board.write("Score: 0", font=("Arial", 18, "bold"))', note: '처음 점수판' },
+], title: '점수판 만들기 5줄 (이미 써 있어요)' };
+const BOARD_PY = 'board = turtle.Turtle()\nboard.hideturtle()\nboard.penup()\nboard.goto(-140, 105)\nboard.write("Score: 0", font=("Arial", 18, "bold"))\n';
+
+// 뱀
+const SNAKE = { fold: [
+  { given: 'snakes = []', note: '뱀 기차 (빈 목록)' },
+  { given: 'for i in range(5):', note: '5칸 만들기!' },
+  { box: [
+    { given: 'body = turtle.Turtle()', note: '몸통 만들기' },
+    { given: 'body.shape("square")', note: '네모 모양' },
+    { given: 'body.color("green")', note: '초록색' },
+    { given: 'body.penup()', note: '펜 들기' },
+    { given: 'body.speed(0)', note: '가장 빠르게' },
+    { given: 'body.goto(-120 - 20 * i, 0)', note: 'i번째 칸 자리' },
+    { given: 'snakes.append(body)', note: '기차에 붙이기' },
+  ] },
+  { given: 'snakes[0].color("darkgreen")', note: '머리는 진한 초록' },
+], title: '뱀 몸통 만들기 (25차시에서 만든 것)' };
+const SNAKE_PY = 'snakes = []\nfor i in range(5):\n    body = turtle.Turtle()\n    body.shape("square")\n    body.color("green")\n    body.penup()\n    body.speed(0)\n    body.goto(-120 - 20 * i, 0)\n    snakes.append(body)\nsnakes[0].color("darkgreen")\n';
+const FOLLOW = [
+  { given: 'for i in range(len(snakes) - 1, 0, -1):', note: '꼬리부터 앞으로' },
+  { box: [{ given: 'snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())', note: '앞 칸 자리로' }] },
+];
+const FOLLOW_PY = '    for i in range(len(snakes) - 1, 0, -1):\n        snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())\n';
+// 뱀 방향키 (반대 방향으로는 못 돌게 막는 if 포함)
+const STEER_DIRS = [['up', 90, 270, 'Up', '위'], ['down', 270, 90, 'Down', '아래'], ['left', 180, 0, 'Left', '왼쪽'], ['right', 0, 180, 'Right', '오른쪽']];
+const STEER = (() => {
+  const out = [];
+  STEER_DIRS.forEach(([n, a, bad, k, ko]) => {
+    out.push({ given: `def go_${n}():`, note: `${ko}으로` });
+    out.push({ box: [{ given: `if snakes[0].heading() != ${bad}:`, note: '반대 방향이 아니면' }, { box: [{ given: `snakes[0].setheading(${a})`, note: `${ko}쪽을 봐` }] }] });
+  });
+  STEER_DIRS.forEach(([n, a, bad, k, ko]) => out.push({ given: `turtle.onkey(go_${n}, "${k}")`, note: `${ko} 화살표 키` }));
+  out.push({ given: 'turtle.listen()', note: '귀 열기' });
+  return { fold: out, title: '방향키 코드 (27차시에서 만든 것)' };
+})();
+const STEER_PY = STEER_DIRS.map(([n, a, bad]) => `def go_${n}():\n    if snakes[0].heading() != ${bad}:\n        snakes[0].setheading(${a})\n`).join('') + STEER_DIRS.map(([n, a, bad, k]) => `turtle.onkey(go_${n}, "${k}")\n`).join('') + 'turtle.listen()\n';
+
+const FOOD = { fold: [
+  { given: 'food = turtle.Turtle()', note: '사과 만들기' },
+  { given: 'food.shape("circle")', note: '동그라미 모양' },
+  { given: 'food.color("red")', note: '빨간색 사과' },
+  { given: 'food.penup()', note: '펜 들기' },
+  { given: 'food.goto(60, 0)', note: '사과 놓을 자리' },
+], title: '사과 만들기 5줄 (28차시에서 만든 것)' };
+const FOOD_PY = 'food = turtle.Turtle()\nfood.shape("circle")\nfood.color("red")\nfood.penup()\nfood.goto(60, 0)\n';
+const GROW_PY = 'def grow():\n    body = turtle.Turtle()\n    body.shape("square")\n    body.color("green")\n    body.penup()\n    body.speed(0)\n    body.goto(snakes[-1].xcor(), snakes[-1].ycor())\n    snakes.append(body)\n';
+const EAT_PY = 'def eat():\n    if snakes[0].distance(food) < 15:\n        x = random.randint(-6, 6) * 20\n        y = random.randint(-4, 4) * 20\n        food.goto(x, y)\n        grow()\n';
+const EAT_FOLD = { fold: [
+  { given: 'def grow():', note: '자라기 명령' },
+  { box: [
+    { given: 'body = turtle.Turtle()', note: '새 몸통' }, { given: 'body.shape("square")', note: '네모' }, { given: 'body.color("green")', note: '초록색' },
+    { given: 'body.penup()', note: '펜 들기' }, { given: 'body.speed(0)', note: '가장 빠르게' }, { given: 'body.goto(snakes[-1].xcor(), snakes[-1].ycor())', note: '꼬리 끝 자리' }, { given: 'snakes.append(body)', note: '기차에 붙이기' },
+  ] },
+  { given: 'def eat():', note: '먹기 명령' },
+  { box: [
+    { given: 'if snakes[0].distance(food) < 15:', note: '사과에 가까우면' },
+    { box: [
+      { given: 'x = random.randint(-6, 6) * 20', note: '가로 자리 뽑기' }, { given: 'y = random.randint(-4, 4) * 20', note: '세로 자리 뽑기' },
+      { given: 'food.goto(x, y)', note: '사과 도망!' }, { given: 'grow()', note: '몸통 늘리기!' },
+    ] },
+  ] },
+], title: '먹고 자라는 코드 (28차시에서 만든 것)' };
+const OVER_LINE = { given: 'snakes[0].write("GAME OVER", align="center", font=("Arial", 24, "bold"))', note: 'GAME OVER 글씨!' };
+const FULL_PY = `import random\n${ARENA_PY}${SNAKE_PY}${FOOD_PY}${GROW_PY}${EAT_PY}def move():\n${FOLLOW_PY}    snakes[0].forward(20)\n    eat()\n    x = snakes[0].xcor()\n    y = snakes[0].ycor()\n    dead = False\n    if x > 140 or x < -140 or y > 90 or y < -90:\n        dead = True\n    for body in snakes[1:]:\n        if snakes[0].distance(body) < 10:\n            dead = True\n    if dead:\n        snakes[0].write("GAME OVER", align="center", font=("Arial", 24, "bold"))\n    else:\n        turtle.ontimer(move, 200)\n${STEER_PY}move()\n`;
+const LESSON = {
+  num: 29,
+  topic: '벽·꼬리에 닿으면 끝',
+  words: [
+    { emo: '🧱', en: 'or', say: '오어', ko: '또는 (하나라도 맞으면)' },
+    { emo: '✅', en: 'True / False', say: '트루 / 폴스', ko: '맞다 / 아니다' },
+    { emo: '💀', en: 'dead', say: '데드', ko: '죽었나? (상자 이름)' },
+    { emo: '🐍', en: 'snakes[1:]', say: '', ko: '머리 빼고 몸통 전부' },
+    { emo: '🔁', en: 'for body in', say: '', ko: '몸통을 하나씩' },
+  ],
+  preview: FULL_PY,
+  missions: [
+    {
+      kind: 'preview', title: '오늘 만들 것 🎁',
+      talk: `드디어 <b>뱀 게임 완성</b>이에요! 🐍 벽에 부딪히거나 <b>내 몸통</b>을 물면 <b>GAME OVER</b> 가 나와요.<br><span class="small">▶ 미리보기를 누르고 방향키로 조종해 보세요. 가만히 두면 벽에 부딪혀요!</span>`,
+      words: true,
+      done: '부딪히면 게임이 끝나요! 오늘 이걸 만들어요. <b>다음 →</b>',
+    },
+    {
+      title: '또는(or) 🧱',
+      talk: `벽은 <b>왼쪽 또는 오른쪽</b>에 있어요. <b>or</b> 는 <b>"또는"</b> 이라는 뜻이에요. 둘 중 <b>하나라도</b> 맞으면 돼요.<br>빈칸에 <b>or</b> 를 써 보세요!`,
+      chips: [['t.xcor() > 140', '오른쪽 벽'], ['or', '또는'], ['t.xcor() < -140', '왼쪽 벽']],
+      sentence: '🗣️ "오른쪽 벽에 닿았거나, 또는 왼쪽 벽에 닿았으면 벽이다! 라고 말해"',
+      lines: [
+        { prep: true }, { given: 't.forward(200)', note: '앞으로 200 (오른쪽 벽 쪽)' },
+        { blank: 'if t.xcor() > 140 @ t.xcor() < -140:', answers: ['or'], note: '오른쪽 벽 또는 왼쪽 벽이면' },
+        { box: [{ given: 'print("벽이다!")', note: '벽이다! 라고 말하기' }] },
+      ],
+      hint: '"또는" 은 영어로 <b>or</b> (오어) 예요.',
+      done: '오른쪽 벽 쪽(200)이라서 <b>"벽이다!"</b> 가 나왔어요! 🧱 둘 중 하나만 맞아도 돼요.',
+    },
+    {
+      title: '죽었나? 맞다/아니다 💀',
+      talk: `<b>dead</b> 라는 상자에 <b>"죽었나?"</b> 를 기억해 둬요. 처음엔 <b>False(아니다)</b>, 부딪히면 <b>True(맞다)</b> 로 바꿔요.<br>부딪혔을 때 쓰는 줄을 직접 써 보세요! (T 는 큰 글자!)`,
+      chips: [['dead = False', '죽었나? 아니다'], ['dead = True', '죽었나? 맞다!']],
+      lines: [
+        { given: 'x = 200', note: 'x 상자에 200 (벽 쪽!)' },
+        { given: 'dead = False', note: '처음엔 안 죽었어요' },
+        { given: 'if x > 140:', note: '벽에 닿았으면' },
+        { box: [{ type: 'dead = True', note: '죽었다!' }] },
+        { given: 'print(dead)', note: '죽었나?' },
+      ],
+      done: '<b>True</b> 가 나왔어요! 💀 벽에 닿아서 dead 가 맞다(True)로 바뀌었어요.',
+    },
+    {
+      title: '몸통을 하나씩 꺼내기 🐍',
+      talk: `내 몸통을 물었는지 보려면 <b>머리 빼고 몸통 전부</b>를 하나씩 확인해야 해요.<br><b>snakes[1:]</b> 은 <b>"1번 칸부터 끝까지"</b>(머리 빼고!), <b>for body in snakes[1:]:</b> 은 <b>"몸통을 하나씩 body 로 꺼내서 해 줘!"</b> 예요. 줄을 직접 써 보세요!`,
+      chips: [['snakes[1:]', '1번 칸부터 끝까지 (머리 빼고)'], ['for body in', '하나씩 body 로 꺼내서']],
+      lines: [
+        SNAKE,
+        { type: 'for body in snakes[1:]:', note: '몸통을 하나씩!' },
+        { box: [{ given: 'print("몸통 하나!")', note: '몸통 하나 확인' }], label: '🔁 반복 상자 안' },
+      ],
+      done: '<b>"몸통 하나!"</b> 가 <b>4</b> 번 나왔어요! 🐍 몸통은 4칸이거든요. (머리는 빼고)',
+    },
+    {
+      title: '내 몸통을 물었나? 😱',
+      talk: `머리와 몸통 사이 거리가 <b>10보다 작으면</b> 물은 거예요! 연습으로 머리를 몸통 한 칸 자리로 옮겨 놓았어요.<br>빈칸에 <b>10</b> 을 써 보세요.`,
+      lines: [
+        SNAKE,
+        { given: 'snakes[0].goto(-160, 0)', note: '머리를 몸통 자리로 (연습!)' },
+        { given: 'for body in snakes[1:]:', note: '몸통을 하나씩!' },
+        { box: [
+          { blank: 'if snakes[0].distance(body) < @:', answers: ['10'], note: '머리가 몸통에 닿았으면' },
+          { box: [{ given: 'print("몸통을 물었다!")', note: '물었다!' }] },
+        ] },
+      ],
+      hint: '닿았다고 인정하는 거리는 <b>10</b> 이에요.',
+      done: '<b>"몸통을 물었다!"</b> 가 나왔어요! 😱 몸통 하나와 머리가 같은 자리였거든요.',
+    },
+    {
+      title: '게임 오버 완성! 🎮',
+      talk: `이제 다 합쳐요! 한 칸 움직일 때마다 <b>벽에 닿았나? 몸통을 물었나?</b> 를 확인하고, 하나라도 맞으면 <b>dead = True</b>!<br>죽었으면 <b>GAME OVER</b>, 아니면 <b>계속</b> 기어가요. 빈칸 4개를 채워 보세요! (벽은 <b>or</b> 3개, 마지막은 <b>True</b>)`,
+      lines: [
+        { given: 'import random', note: '주사위 상자 열기' }, ARENA, SNAKE, FOOD, EAT_FOLD,
+        { given: 'def move():', note: '"move" 명령' },
+        { box: [
+          ...FOLLOW,
+          { given: 'snakes[0].forward(20)', note: '머리는 앞으로 20' },
+          { given: 'eat()', note: '먹었나 확인!' },
+          { given: 'x = snakes[0].xcor()', note: '머리의 가로 자리' },
+          { given: 'y = snakes[0].ycor()', note: '머리의 세로 자리' },
+          { given: 'dead = False', note: '처음엔 안 죽었어요' },
+          { blank: 'if x > 140 @ x < -140 @ y > 90 @ y < -90:', answers: ['or', 'or', 'or'], note: '벽에 닿았으면' },
+          { box: [{ blank: 'dead = @', answers: ['True'], note: '죽었다!' }] },
+          { given: 'for body in snakes[1:]:', note: '몸통을 하나씩' },
+          { box: [{ given: 'if snakes[0].distance(body) < 10:', note: '몸통을 물었으면' }, { box: [{ given: 'dead = True', note: '죽었다!' }] }] },
+          { given: 'if dead:', note: '죽었으면' },
+          { box: [OVER_LINE] },
+          { given: 'else:', note: '아니면' },
+          { box: [{ given: 'turtle.ontimer(move, 200)', note: '0.2초 뒤에 또!' }] },
+        ], label: '📦 move 명령 상자 안' },
+        STEER,
+        { given: 'move()', note: '기어가기 시작!' },
+      ],
+      hint: '벽은 <b>or</b> 세 번, 마지막 빈칸은 <b>True</b> (맨 앞 T 는 큰 글자!)이에요.',
+      done: '▶ 실행한 뒤 <b>방향키</b>로 뱀을 조종해 보세요! 🐍 벽에 닿으면 <b>GAME OVER</b> 가 나와요.<br><span class="small">(안 움직이면 거북이 무대를 한 번 클릭하고 눌러 보세요)</span>',
+    },
+    {
+      kind: 'free', colors: false, title: '나만의 뱀 게임 🎨',
+      talk: `속도(<b>200</b>), 뱀 색깔, 사과 색깔을 바꿔서 <b>나만의 뱀 게임</b>을 완성해 보세요!<br><span class="small">친구에게 해 보게 하고, 누가 더 길게 키우는지 대결해요! 🏆</span>`,
+      code: `import turtle\n${FULL_PY}`,
+      done: '모든 게임 만들기를 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+    },
+  ],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>

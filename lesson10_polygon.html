@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10차시: 거북이 코딩 놀이터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="lesson.css">
+<script src="https://skulpt.org/js/skulpt.min.js"></script>
+<script src="https://skulpt.org/js/skulpt-stdlib.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+<script>
+const POLY_LOOP = [
+  { given: 'for i in range(n):', note: 'n번 해 줘!' },
+  { box: [{ given: 't.forward(100)', note: '앞으로 100' }, { given: 't.left(360 / n)', note: '알맞게 돌기 (자동 계산)' }] },
+];
+const ASK = 'n = int(turtle.textinput("질문", "몇 각형을 그릴까?"))';
+const LESSON = {
+  num: 10,
+  topic: '몇 각형을 그릴까?',
+  words: [
+  { emo: '📦', en: 'n = 5', say: '엔', ko: 'n 상자에 5 넣어' },
+  { emo: '🔁', en: 'range(n)', say: '레인지 엔', ko: 'n번 반복해' },
+  { emo: '💬', en: 'textinput', say: '텍스트 인풋', ko: '물어보기' },
+  { emo: '🔢', en: 'int', say: '인트', ko: '숫자로 바꿔' },
+  { emo: '⬆️', en: 'forward', say: '포워드', ko: '앞으로 가' },
+  { emo: '↩️', en: 'left', say: '레프트', ko: '왼쪽으로 돌아' },
+],
+  preview: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\nt.color("purple")\nt.pensize(3)\nn = int(turtle.textinput("질문", "몇 각형을 그릴까?"))\nfor i in range(n):\n    t.forward(100)\n    t.left(360 / n)\nprint(str(n) + "각형 완성!")\n`,
+  missions: [
+  {
+    kind: 'preview', title: '오늘 만들 것 🎁',
+    talk: `오늘은 거북이가 여러분에게 <b>"몇 각형을 그릴까?"</b> 하고 물어봐요.<br>대답한 숫자대로 도형을 그려 주는 프로그램을 만들 거예요!<br><span class="small">▶ 미리보기를 누르고, 질문이 나오면 숫자 3~8 중 하나를 써 보세요.</span>`,
+    words: true,
+    done: '내가 고른 숫자대로 도형이 그려졌죠? 오늘 이걸 만들어요! <b>다음 →</b>',
+  },
+  {
+    title: '상자에 숫자 넣기 📦',
+    talk: `코딩에서는 <b>이름표 붙은 상자</b>에 숫자를 넣어 둘 수 있어요.<br>상자 이름은 <b>n</b>, 넣을 숫자는 <b>5</b>! 위에서 상자에 넣으면, 아래에서 꺼내 써요.`,
+    chips: [['n', '상자 이름'], ['=', '넣어!'], ['5', '넣을 숫자']],
+    sentence: '🗣️ "n 상자에 5를 넣어!"  💡 = 는 "같다"가 아니라 "넣어"예요!',
+    lines: [{ prep: true }, { given: 't.color("purple")', note: '보라색 펜' }, { type: 'n = 5', note: 'n 상자에 5 넣기' }].concat(POLY_LOOP),
+    done: '오각형 완성! ⬟<br><span class="small">range(n) 은 "n 상자 속 숫자만큼 반복해!", 360 / n 은 "도는 각도는 거북이가 알아서 계산해!" 라는 뜻이에요.</span>',
+  },
+  {
+    title: '숫자 하나로 도형 바꾸기 🔄',
+    talk: `아래 줄은 그대로 두고, <b>상자 속 숫자만</b> 바꿔 보세요.<br>버튼을 눌러도 돼요!`,
+    lines: [{ prep: true }, { given: 't.color("purple")', note: '보라색 펜' }, { blank: 'n = @', answers: [null], start: ['3'], note: 'n 상자에 ? 넣기' }].concat(POLY_LOOP),
+    quick: ['3', '4', '6', '8'],
+    done: '숫자 하나만 바꿨는데 도형이 바뀌었죠? 이게 <b>상자(변수)</b>의 힘이에요! 💪<br>그런데… 다른 도형을 그릴 때마다 <b>코드를 고쳐야</b> 해요. 귀찮죠? 😵',
+  },
+  {
+    title: '거북이가 물어보게 하기 💬',
+    talk: `코드를 고치는 대신, 거북이가 <b>직접 물어보게</b> 해요!<br>바뀐 건 <b>n 상자 줄 하나</b>뿐이에요. ▶ 실행하고 질문에 대답해 보세요.`,
+    chips: [['turtle.textinput("질문", "몇 각형을 그릴까?")', '물어보는 창 띄워'], ['int( )', '대답을 숫자로 바꿔']],
+    sentence: '🗣️ "몇 각형인지 물어보고 → 숫자로 바꿔서 → n 상자에 넣어!"',
+    lines: [{ prep: true }, { given: 't.color("purple")', note: '보라색 펜' }, { given: ASK, note: '물어보고, 대답을 n 상자에' }].concat(POLY_LOOP),
+    done: '이제 코드를 안 고쳐도 원하는 도형이 나와요! 🎉 여러 번 실행해서 다른 숫자도 대답해 보세요.',
+  },
+  {
+    title: '도전! int 빈칸 채우기 🔢',
+    talk: `대답은 늘 <b>글자</b>로 들어와요. 글자 "5"로는 반복을 못 해요! 😵<br>그래서 <b>int( )</b>로 감싸서 숫자로 바꿔요. 빈칸에 <b>int</b> 를 써 보세요.`,
+    lines: [{ prep: true }, { given: 't.color("blue")', note: '파란색 펜' }, { blank: 'n = @(turtle.textinput("질문", "몇 각형을 그릴까?"))', answers: ['int'], note: '물어보고, 숫자로 n 상자에' }].concat(POLY_LOOP),
+    hint: '빈칸에 영어 소문자로 <b>int</b> 를 써요. (인트 = 숫자로 바꿔)',
+    done: '완벽해요! 🏆 이제 "물어보는 도형 프로그램"을 직접 만들 수 있어요!',
+  },
+  {
+    kind: 'free', title: '나만의 도형 프로그램 🎨',
+    talk: `<b>질문 글자</b>, <b>색깔</b>, <b>크기(100)</b>를 마음대로 바꿔 보세요!<br><span class="small">질문은 "따옴표" 안에서 한글로 써도 돼요. 친구에게 실행시켜 보세요!</span>`,
+    code: `import turtle\nt = turtle.Turtle()\nt.shape("turtle")\n\nt.color("purple")\nn = int(turtle.textinput("질문", "몇 각형을 그릴까?"))\nfor i in range(n):\n    t.forward(100)\n    t.left(360 / n)\n`,
+    done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
+  },
+],
+};
+</script>
+<script src="lesson.js"></script>
+</body>
+</html>
