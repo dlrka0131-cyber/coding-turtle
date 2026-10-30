@@ -91,7 +91,7 @@ const SNAKE = { fold: [
   { given: 'for i in range(5):', note: '5칸 만들기!' },
   { box: [
     { given: 'body = turtle.Turtle()', note: '몸통 만들기' },
-    { given: 'body.shape("square")', note: '네모 모양' },
+    { given: 'body.shape("circle")', note: '동그라미 모양' },
     { given: 'body.color("green")', note: '초록색' },
     { given: 'body.penup()', note: '펜 들기' },
     { given: 'body.speed(0)', note: '가장 빠르게' },
@@ -101,7 +101,7 @@ const SNAKE = { fold: [
   { given: 'snakes[0].color("darkgreen")', note: '머리는 진한 초록' },
   { given: 'turtle.update()', note: '이제 화면에 보여 줘!' },
 ], title: '뱀 몸통 만들기 (25차시에서 만든 것)' };
-const SNAKE_PY = 'turtle.tracer(0)\nsnakes = []\nfor i in range(5):\n    body = turtle.Turtle()\n    body.shape("square")\n    body.color("green")\n    body.penup()\n    body.speed(0)\n    body.goto(-120 - 20 * i, 0)\n    snakes.append(body)\nsnakes[0].color("darkgreen")\nturtle.update()\n';
+const SNAKE_PY = 'turtle.tracer(0)\nsnakes = []\nfor i in range(5):\n    body = turtle.Turtle()\n    body.shape("circle")\n    body.color("green")\n    body.penup()\n    body.speed(0)\n    body.goto(-120 - 20 * i, 0)\n    snakes.append(body)\nsnakes[0].color("darkgreen")\nturtle.update()\n';
 const FOLLOW = [
   { given: 'for i in range(len(snakes) - 1, 0, -1):', note: '꼬리부터 앞으로' },
   { box: [{ given: 'snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())', note: '앞 칸 자리로' }] },
@@ -123,7 +123,7 @@ const STEER_PY = STEER_DIRS.map(([n, a, bad]) => `def go_${n}():\n    if snakes[
 
 const BODY_LINES = [
   { given: 'body = turtle.Turtle()', note: '몸통 만들기' },
-  { given: 'body.shape("square")', note: '네모 모양' },
+  { given: 'body.shape("circle")', note: '동그라미 모양' },
   { given: 'body.color("green")', note: '초록색' },
   { given: 'body.penup()', note: '펜 들기' },
 ];
@@ -131,7 +131,7 @@ const LESSON = {
   num: 25,
   topic: '뱀 몸통 만들기',
   words: [
-    { emo: '🟩', en: 'body', say: '바디', ko: '몸통 한 칸' },
+    { emo: '🟢', en: 'body', say: '바디', ko: '몸통 한 칸' },
     { emo: '🚂', en: 'snakes = []', say: '스네이크스', ko: '뱀 기차 (빈 목록)' },
     { emo: '🔗', en: 'append', say: '어펜드', ko: '기차에 붙이기' },
     { emo: '📏', en: 'len', say: '렌', ko: '칸이 몇 개?' },
@@ -146,16 +146,16 @@ const LESSON = {
       done: '초록 뱀이 완성됐어요! 오늘 이걸 만들어요. <b>다음 →</b>',
     },
     {
-      title: '몸통 한 칸 만들기 🟩',
-      talk: `뱀의 몸통 한 칸도 <b>거북이</b>예요! 모양만 <b>네모</b>로 바꿔요.<br>첫 줄을 직접 써 보세요.`,
+      title: '몸통 한 칸 만들기 🟢',
+      talk: `뱀의 몸통 한 칸도 <b>거북이</b>예요! 모양만 <b>동그라미</b>로 바꿔요.<br>첫 줄을 직접 써 보세요.`,
       chips: [['body', '몸통 이름'], ['=', '넣어!'], ['turtle.Turtle()', '새 거북이']],
       lines: [
         { type: 'body = turtle.Turtle()', note: '몸통 만들기!' },
-        { given: 'body.shape("square")', note: '네모 모양' },
+        { given: 'body.shape("circle")', note: '동그라미 모양' },
         { given: 'body.color("green")', note: '초록색' },
         { given: 'body.penup()', note: '펜 들기' },
       ],
-      done: '초록 네모가 나왔어요! 🟩',
+      done: '초록 동그라미가 나왔어요! 🟢',
     },
     {
       title: '기차에 칸 붙이기 🚂',
@@ -185,7 +185,7 @@ const LESSON = {
         { given: 'print(len(snakes))', note: '칸이 몇 개?' },
       ],
       hint: '기차 끝에 붙이는 영어는 <b>append</b> (어펜드)예요!',
-      done: '초록 네모가 5개 줄줄이! 🐍 기차에 <b>5</b> 칸이 들어 있어요.',
+      done: '초록 동그라미가 5개 줄줄이! 🐍 기차에 <b>5</b> 칸이 들어 있어요.',
     },
     {
       title: '몇 칸으로 할까? 🔢',
@@ -221,8 +221,8 @@ const LESSON = {
     },
     {
       kind: 'free', colors: false, title: '나만의 뱀 🎨',
-      talk: `뱀의 <b>길이</b>, <b>몸 색깔</b>, <b>머리 색깔</b>을 마음대로 바꿔 보세요!<br><span class="small">몸 모양을 "circle" 로 바꾸면 동글동글한 뱀이 돼요.</span>`,
-      code: `import turtle\nturtle.tracer(0)\nsnakes = []\nfor i in range(6):\n    body = turtle.Turtle()\n    body.shape("square")\n    body.color("orange")\n    body.penup()\n    body.goto(-20 * i, 0)\n    snakes.append(body)\nsnakes[0].color("red")\nturtle.update()\n`,
+      talk: `뱀의 <b>길이</b>, <b>몸 색깔</b>, <b>머리 색깔</b>을 마음대로 바꿔 보세요!<br><span class="small">몸 모양을 "square" 로 바꾸면 네모난 뱀이 돼요.</span>`,
+      code: `import turtle\nturtle.tracer(0)\nsnakes = []\nfor i in range(6):\n    body = turtle.Turtle()\n    body.shape("circle")\n    body.color("orange")\n    body.penup()\n    body.goto(-20 * i, 0)\n    snakes.append(body)\nsnakes[0].color("red")\nturtle.update()\n`,
       done: '오늘의 미션을 모두 끝냈어요! 🏆 아래 <b>완료</b> 버튼을 눌러 주세요.',
     },
   ],

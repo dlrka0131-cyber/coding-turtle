@@ -86,11 +86,12 @@ const BOARD_PY = 'board = turtle.Turtle()\nboard.hideturtle()\nboard.penup()\nbo
 
 // 뱀
 const SNAKE = { fold: [
+  { given: 'turtle.tracer(0)', note: '다 만든 뒤에 한꺼번에 보여 주기' },
   { given: 'snakes = []', note: '뱀 기차 (빈 목록)' },
   { given: 'for i in range(5):', note: '5칸 만들기!' },
   { box: [
     { given: 'body = turtle.Turtle()', note: '몸통 만들기' },
-    { given: 'body.shape("square")', note: '네모 모양' },
+    { given: 'body.shape("circle")', note: '동그라미 모양' },
     { given: 'body.color("green")', note: '초록색' },
     { given: 'body.penup()', note: '펜 들기' },
     { given: 'body.speed(0)', note: '가장 빠르게' },
@@ -98,8 +99,10 @@ const SNAKE = { fold: [
     { given: 'snakes.append(body)', note: '기차에 붙이기' },
   ] },
   { given: 'snakes[0].color("darkgreen")', note: '머리는 진한 초록' },
+  { given: 'turtle.update()', note: '이제 화면에 보여 줘!' },
+  { given: 'turtle.tracer(1)', note: '다시 한 걸음씩 보여 주기' },
 ], title: '뱀 몸통 만들기 (25차시에서 만든 것)' };
-const SNAKE_PY = 'snakes = []\nfor i in range(5):\n    body = turtle.Turtle()\n    body.shape("square")\n    body.color("green")\n    body.penup()\n    body.speed(0)\n    body.goto(-120 - 20 * i, 0)\n    snakes.append(body)\nsnakes[0].color("darkgreen")\n';
+const SNAKE_PY = 'turtle.tracer(0)\nsnakes = []\nfor i in range(5):\n    body = turtle.Turtle()\n    body.shape("circle")\n    body.color("green")\n    body.penup()\n    body.speed(0)\n    body.goto(-120 - 20 * i, 0)\n    snakes.append(body)\nsnakes[0].color("darkgreen")\nturtle.update()\nturtle.tracer(1)\n';
 const FOLLOW = [
   { given: 'for i in range(len(snakes) - 1, 0, -1):', note: '꼬리부터 앞으로' },
   { box: [{ given: 'snakes[i].goto(snakes[i-1].xcor(), snakes[i-1].ycor())', note: '앞 칸 자리로' }] },
